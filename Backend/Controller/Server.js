@@ -21,6 +21,7 @@ import path from "path";
 import Feedback from "../Routes/Feedback.js"
 import { adminOnly } from "../Middleware/adminMiddleware.js"
 import { authMiddleware } from "../Middleware/authMiddle.js"
+import WishlistRoute from "../Routes/WishlistRoute.js"
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -60,6 +61,8 @@ app.use("/orders", Order)
 app.use("/products", Products)
 
 app.use('/discounts', AdminDiscounts)
+
+app.use('/wishlist', WishlistRoute)
 
 
 //Ai

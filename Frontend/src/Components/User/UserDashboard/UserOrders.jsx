@@ -1,139 +1,277 @@
-import { useState } from "react";
-import { C, statusColor, Badge, Card, SectionTitle, Btn } from "./shared";
-import { useEffect, useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
-import  CartContext  from "../../Context/CartContext";
+import {
+  FiPackage,
+  FiMapPin,
+  FiPhone,
+  FiMail,
+  FiUser,
+  FiCalendar,
+  FiCheckCircle,
+  FiClock,
+  FiXCircle,
+  FiShoppingBag,
+} from "react-icons/fi";
+import CartContext from "../../Context/CartContext";
 
-// ── Mock Data ──
-export const ORDERS = [
-  { id: "#A8F21C", date: "Feb 14, 2026", status: "Delivered", items: 3, total: "$124.00", product: "Wireless Headphones" },
-  { id: "#B3D90E", date: "Feb 08, 2026", status: "Shipped", items: 1, total: "$89.99", product: "Mechanical Keyboard" },
-  { id: "#C7E45A", date: "Jan 29, 2026", status: "Processing", items: 2, total: "$210.50", product: "Smart Watch + Strap" },
-  { id: "#D1F033", date: "Jan 15, 2026", status: "Delivered", items: 1, total: "$44.00", product: "USB-C Hub" },
-  { id: "#E9A22B", date: "Jan 03, 2026", status: "Returned", items: 1, total: "$79.00", product: "Bluetooth Speaker" },
-];
-export default function UserOrders() {
-  const [expandedId, setExpandedId] = useState(null);
-  const [filter, setFilter] = useState("All");
-  const [Orders , setOrders] = useState([]);
-  const { user } = useContext(CartContext);
-  const statuses = ["All", "Delivered", "Shipped", "Processing", "Returned"];
+const UserOrder = () => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const {user} = useContext(CartContext)
 
-
-
-  // useEffect(()=>{
-  //   const fetchOrders = async () => {
-
-  //   const res  =  await axios.get("http://localhost:3000/orders/getorders")
-  //   console.log(res.data)
-  //   // setOrders(ORDERS)
-  //   }
-  //   fetchOrders()
-
-  // },[])
-
-  useEffect(()=>{
+  useEffect(() => {
     const fetchOrders = async () => {
+      try {
+        console.log("User is :", user);
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          `http://localhost:3000/orders/getUserOrders/${user.Email}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        console.log(res.data);
+        setOrders(res.data);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
 
-      console.log(user.Email)
-    const res  =  await axios.get(`http://localhost:3000/orders/getUserOrders/${user.Email}`)
-    console.log("Response data ",res.data)
-    setOrders(res.data)
+  const getStatusConfig = (status) => {
+    switch (status?.toLowerCase()) {
+      case "paid":
+        return {
+          icon: <FiCheckCircle className="w-4 h-4" />,
+          bg: "bg-emerald-50",
+          text: "text-emerald-700",
+          border: "border-emerald-200",
+          dot: "bg-emerald-500",
+        };
+      case "pending":
+        return {
+          icon: <FiClock className="w-4 h-4" />,
+          bg: "bg-amber-50",
+          text: "text-amber-700",
+          border: "border-amber-200",
+          dot: "bg-amber-500",
+        };
+      default:
+        return {
+          icon: <FiXCircle className="w-4 h-4" />,
+          bg: "bg-red-50",
+          text: "text-red-700",
+          border: "border-red-200",
+          dot: "bg-red-500",
+        };
     }
-    fetchOrders()
+  };
 
-  },[])
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-gray-100">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-gray-200 border-t-indigo-600 rounded-full animate-spin"></div>
+          <p className="text-gray-500 font-medium text-lg">
+            Loading your orders...
+          </p>
+        </div>
+      </div>
+    );
 
-
-
-
-
-  const filtered = filter === "All" ? Orders : Orders.filter(o => o.status === filter);
+  if (orders.length === 0)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-gray-100">
+        <div className="text-center">
+          <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+            <FiShoppingBag className="w-10 h-10 text-gray-400" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">
+            No Orders Yet
+          </h3>
+          <p className="text-gray-500">
+            Looks like you haven't placed any orders yet.
+          </p>
+        </div>
+      </div>
+    );
 
   return (
-    <Card>
-      <SectionTitle>Track Orders</SectionTitle>
-
-      {/* Filter pills */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-        {statuses.map(s => (
-          <button key={s} onClick={() => setFilter(s)} style={{
-            padding: "6px 16px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer",
-            border: "none", transition: "all 0.15s",
-            background: filter === s ? C.brand : C.borderLight,
-            color: filter === s ? "#fff" : C.muted,
-            fontFamily: "'DM Sans',sans-serif",
-          }}>{s}</button>
-        ))}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-100">
+      {/* Hero Header */}
+      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 py-12 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center gap-3 mb-2">
+            <FiPackage className="w-8 h-8 text-indigo-200" />
+            <h2 className="text-4xl font-extrabold text-white tracking-tight">
+              My Orders
+            </h2>
+          </div>
+          <p className="text-indigo-200 text-lg ml-11">
+            You have placed{" "}
+            <span className="font-bold text-white">{orders.length}</span>{" "}
+            order{orders.length > 1 ? "s" : ""}
+          </p>
+        </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {filtered.map( order => {
-          const sc = statusColor(order.status);
-          const expanded = expandedId === order.id;
+      {/* Orders List */}
+      <div className="max-w-5xl mx-auto px-6 -mt-6 pb-16">
+        {orders.map((order, orderIndex) => {
+          const statusConfig = getStatusConfig(order.Status);
           return (
-            <div key={order.id} style={{ border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden", transition: "box-shadow 0.15s" }}>
-              <div
-                onClick={() => setExpandedId(expanded ? null : order.id)}
-                style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", cursor: "pointer", background: expanded ? C.borderLight : "#fff" }}
-              >
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: C.brandLight, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>📦</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: C.text }}>{order.id}</div>
-                  <div style={{ fontSize: 12, color: C.muted, marginTop: 1 }}>{order.product} · {order.date}</div>
+            <div
+              key={order._id}
+              className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] border border-gray-100 mb-8 overflow-hidden hover:shadow-[0_8px_40px_rgba(0,0,0,0.1)] transition-shadow duration-300"
+            >
+              {/* Order Top Bar */}
+              <div className="bg-gradient-to-r from-gray-50 to-slate-50 border-b border-gray-100 px-6 py-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200">
+                      <FiPackage className="w-4 h-4 text-indigo-500" />
+                      <span className="text-xs text-gray-500">Order</span>
+                      <span className="text-xs font-bold text-gray-800 font-mono">
+                        #{order._id.slice(-8).toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200">
+                      <FiCalendar className="w-4 h-4 text-indigo-500" />
+                      <span className="text-sm text-gray-600">
+                        {new Date(order.date).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full border ${statusConfig.bg} ${statusConfig.text} ${statusConfig.border}`}
+                  >
+                    {statusConfig.icon}
+                    <span className="text-sm font-bold uppercase tracking-wide">
+                      {order.Status}
+                    </span>
+                  </div>
                 </div>
-                <Badge label={order.status} {...sc} />
-                <div style={{ fontWeight: 700, fontSize: 14, color: C.text }}>{order.total}</div>
-                <span style={{ color: C.brand, fontSize: 12, marginLeft: 4 }}>{expanded ? "▲" : "▼"}</span>
               </div>
 
-              {expanded && (
-                <div style={{ padding: "14px 16px 16px", borderTop: `1px solid ${C.border}`, background: C.borderLight }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 14 }}>
-                    {[["Items", order.items], ["Total", order.total], ["Date", order.date]].map(([k, v]) => (
-                      <div key={k} style={{ background: "#fff", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}` }}>
-                        <div style={{ fontSize: 11, color: C.muted, fontWeight: 600, textTransform: "uppercase" }}>{k}</div>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginTop: 2 }}>{v}</div>
+              <div className="p-6">
+                {/* Customer Details */}
+                <div className="mb-6">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+                    Customer Details
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 border border-slate-100">
+                      <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                        <FiUser className="w-4 h-4 text-indigo-600" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-400 uppercase tracking-wider">
+                          Full Name
+                        </p>
+                        <p className="text-sm font-semibold text-gray-800">
+                          {order.FullName}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 border border-slate-100">
+                      <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                        <FiMail className="w-4 h-4 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-400 uppercase tracking-wider">
+                          Email
+                        </p>
+                        <p className="text-sm font-semibold text-gray-800">
+                          {order.Email}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 border border-slate-100">
+                      <div className="w-9 h-9 rounded-full bg-sky-100 flex items-center justify-center flex-shrink-0">
+                        <FiPhone className="w-4 h-4 text-sky-600" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-400 uppercase tracking-wider">
+                          Phone
+                        </p>
+                        <p className="text-sm font-semibold text-gray-800">
+                          +{order.Phone}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 border border-slate-100">
+                      <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">
+                        <FiMapPin className="w-4 h-4 text-rose-600" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-400 uppercase tracking-wider">
+                          Address
+                        </p>
+                        <p className="text-sm font-semibold text-gray-800">
+                          {order.Address}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cart Items */}
+                <div className="mb-6">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+                    Items Ordered ({order.cart?.length})
+                  </h4>
+                  <div className="space-y-3">
+                    {order.cart?.map((item, index) => (
+                      <div
+                        key={item._id}
+                        className="flex items-center gap-4 bg-gradient-to-r from-slate-50 to-white rounded-xl px-5 py-4 border border-slate-100 hover:border-indigo-200 hover:shadow-sm transition-all duration-200"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-800 text-sm truncate">
+                            {item.name}
+                          </p>
+                          <p className="text-[11px] text-gray-400 font-mono mt-0.5">
+                            ID: {item._id}
+                          </p>
+                        </div>
+                        <div className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></div>
                       </div>
                     ))}
                   </div>
-
-                  {/* Progress bar for active orders */}
-                  {order.status !== "Returned" && (
-                    <div style={{ marginBottom: 14 }}>
-                      <div style={{ fontSize: 12, color: C.muted, marginBottom: 6, fontWeight: 600 }}>Order Progress</div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
-                        {["Placed", "Processing", "Shipped", "Delivered"].map((step, i) => {
-                          const stepIdx = { Placed: 0, Processing: 1, Shipped: 2, Delivered: 3 };
-                          const currentIdx = stepIdx[order.status] ?? 0;
-                          const done = i <= currentIdx;
-                          return (
-                            <div key={step} style={{ display: "flex", alignItems: "center", flex: i < 3 ? 1 : "none" }}>
-                              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                                <div style={{ width: 24, height: 24, borderRadius: "50%", background: done ? C.brand : C.border, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: done ? "#fff" : C.muted, fontWeight: 700, transition: "all 0.3s" }}>
-                                  {done ? "✓" : i + 1}
-                                </div>
-                                <div style={{ fontSize: 10, color: done ? C.brand : C.muted, marginTop: 3, fontWeight: done ? 600 : 400, whiteSpace: "nowrap" }}>{step}</div>
-                              </div>
-                              {i < 3 && <div style={{ flex: 1, height: 2, background: done && i < currentIdx ? C.brand : C.border, margin: "0 4px", marginBottom: 14, transition: "background 0.3s" }} />}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <Btn variant="ghost" small>📋 View Invoice</Btn>
-                    {order.status === "Delivered" && <Btn variant="outline" small>↩️ Return / Refund</Btn>}
-                    {order.status === "Shipped" && <Btn variant="outline" small>🚚 Track Shipment</Btn>}
-                  </div>
                 </div>
-              )}
+
+                {/* Total */}
+                <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 rounded-xl px-6 py-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-indigo-200 text-xs uppercase tracking-widest font-semibold">
+                      Order Total
+                    </p>
+                    <p className="text-white text-sm mt-0.5">
+                      {order.cart?.length} item
+                      {order.cart?.length > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <p className="text-3xl font-extrabold text-white tracking-tight">
+                    Rs. {order.Total?.toLocaleString()}
+                  </p>
+                </div>
+              </div>
             </div>
           );
         })}
       </div>
-    </Card>
+    </div>
   );
-}
+};
+
+export default UserOrder;

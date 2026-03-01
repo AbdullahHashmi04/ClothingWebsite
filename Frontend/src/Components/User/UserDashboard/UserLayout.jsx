@@ -6,8 +6,6 @@ const NAV = [
   { to: "/userDashboard/orders", label: "Track Orders", icon: "📦" },
   { to: "/userDashboard/returns", label: "Returns & Refunds", icon: "↩️" },
   { to: "/userDashboard/wishlist", label: "Wishlist", icon: "❤️" },
-  { to: "/userDashboard/cart", label: "Saved Cart", icon: "🛒" },
-  { to: "/userDashboard/loyalty", label: "Loyalty & Coupons", icon: "🏆" },
   { to: "/userDashboard/addresses", label: "Addresses", icon: "📍" },
   { to: "/userDashboard/checkout", label: "Faster Checkout", icon: "⚡" },
 ];

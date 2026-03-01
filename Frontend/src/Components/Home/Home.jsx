@@ -13,6 +13,7 @@ import "../../Style/PremiumCollection.css";
 import "../../Style/Sections.css";
 import "../../Style/ViewAllButton.css";
 import "../../Style/HeroSection.css";
+import axios from 'axios'
 
 const slides = [
   {
@@ -40,7 +41,7 @@ const slides = [
 
 export default function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const { mydata, setCategory, addToCart } = useContext(CartContext);
+  const { mydata, setCategory, addToCart , user } = useContext(CartContext);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -61,6 +62,35 @@ export default function HeroSlider() {
     setCategory(data);
   };
 
+
+const addToWishlist = async (item) => {
+    console.log("Adding to wishlist: ", item);
+
+    if (user && user.Email) {
+      try {
+        const res = await axios.post("http://localhost:3000/wishlist/add", {
+          Email: user.Email,
+          product: {
+            _id: item._id,
+            name: item.name,
+            price: item.price,
+            imageUrl: item.imageUrl,
+          },
+        });
+        console.log("Added to wishlist:", res.data);
+        alert("Added to wishlist!");
+      } catch (error) {
+        if (error.response?.status === 409) {
+          alert("Item already in wishlist!");
+        } else {
+          console.error("Wishlist error:", error);
+          alert("Failed to add to wishlist");
+        }
+      }
+    } else {
+      alert("Please login to add items to wishlist");
+    }
+  };
 
   const handleAddToCart = (item) => {
     addToCart(item)
@@ -276,6 +306,7 @@ export default function HeroSlider() {
                         <button
                           className="product-card-wishlist"
                           aria-label="Add to wishlist"
+                          onClick={() => addToWishlist(item)}
                         >
                           <Heart className="w-4 h-4" />
                         </button>

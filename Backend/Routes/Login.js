@@ -8,9 +8,9 @@ dotenv.config();
 const router = express.Router();
 
 router.post("/", async (req, res) => {
-    const { Username, Password } = req.body;
+    const { Email, Password } = req.body;
     try {
-        const user = await Credentials.findOne({ Username });
+        const user = await Credentials.findOne({ Email });
         if (!user) {
             return res.status(401).json({ message: "Invalid credentials" });
         }

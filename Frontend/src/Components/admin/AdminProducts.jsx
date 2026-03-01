@@ -170,7 +170,7 @@ function Modal({ onClose, editData }) {
           }}>Cancel</button>
           {editData ? <button onClick={onUpdate} style={{
             flex: 2, padding: "11px", borderRadius: "10px",
-            border: "none", background: "linear-gradient(135deg,#9333ea,#c084fc)",
+            border: "none",  background: "var(--brand-gradient)",
             fontSize: "13.5px", fontWeight: 700, color: "#fff",
             cursor: "pointer", fontFamily: "'DM Sans',sans-serif",
             boxShadow: "0 4px 14px rgba(147,51,234,0.3)",
@@ -179,7 +179,7 @@ function Modal({ onClose, editData }) {
           </button> :
             <button onClick={onSubmit} style={{
               flex: 2, padding: "11px", borderRadius: "10px",
-              border: "none", background: "linear-gradient(135deg,#9333ea,#c084fc)",
+              border: "none", background: "var(--brand-gradient)",
               fontSize: "13.5px", fontWeight: 700, color: "#fff",
               cursor: "pointer", fontFamily: "'DM Sans',sans-serif",
               boxShadow: "0 4px 14px rgba(147,51,234,0.3)",

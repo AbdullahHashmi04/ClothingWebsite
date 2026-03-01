@@ -1,6 +1,5 @@
-import { useState, useRef, useContext, useEffect, useCallback } from "react";
+import { useState, useRef, useContext, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import axios from "axios";
 import { useAuth0 } from "@auth0/auth0-react";
 import "material-design-iconic-font/dist/css/material-design-iconic-font.min.css";
 import {
@@ -28,16 +27,17 @@ const LogoutIcon = () => (
 );
 
 function Avatar({ name, avatarUrl, size = 36 }) {
-  // const initials = name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
+  const initials = name.slice(0,2).toUpperCase();
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%", overflow: "hidden",
-      background: "linear-gradient(135deg, #e0c97f 0%, #c8a84b 100%)",
+       background: "var(--brand-gradient)",
       display: "flex", alignItems: "center", justifyContent: "center",
       fontSize: size * 0.36, fontWeight: "600", color: "#1a1410",
       fontFamily: "'DM Serif Display', Georgia, serif", flexShrink: 0, letterSpacing: "0.02em",
     }}>
-      {avatarUrl ? <img src={avatarUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div>Null</div>}
+      {avatarUrl ? <img src={avatarUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div>
+        {initials}</div>}
     </div>
   );
 }
@@ -70,7 +70,6 @@ function MenuItem({ icon, label, onClick, variant = "default", index = 0 }) {
     </li>
   );
 }
-//{ user = { name: "Jordan Ellis", email: "jordan@studio.io", role: "Pro Member", avatarUrl: null } }
 function UserDropdown() {
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);

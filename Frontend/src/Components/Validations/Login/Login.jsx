@@ -26,7 +26,8 @@ export default function LoginPage() {
 
   const onSubmit = async (data) => {
     try {
-      if (data.Username === "admin" && data.Password === "admin123") {
+      console.log("Submitting login with data:", data);
+      if (data.Email === "admin@admin.com" && data.Password === "admin123") {
         navigate("/admin");
         return;
       }
@@ -88,22 +89,26 @@ export default function LoginPage() {
             {/* Username */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Username
+                Email
               </label>
               <div className="relative">
                 {/* <User className="absolute left-3.5 top-1/2  justify-en -translate-y-1/2 w-4.5 h-4.5 text-gray-400 pointer-events-none" /> */}
                 <input
                   type="text"
-                  placeholder="Enter your username"
+                  placeholder="Enter your email"
                   className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all duration-200"
                   style={{ minHeight: '48px' }}
-                  {...register("Username", {
-                    required: { value: true, message: "Username is required" },
+                  {...register("Email", {
+                    required: { value: true, message: "Email is required" },
+                    pattern: {
+                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                      message: "Please enter a valid email address",
+                    },
                   })}
                 />
               </div>
-              {errors.Username && (
-                <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.Username.message}</p>
+              {errors.Email && (
+                <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.Email.message}</p>
               )}
             </div>
 

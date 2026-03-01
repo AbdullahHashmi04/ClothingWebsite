@@ -3,9 +3,17 @@ import "../../Style/Admin.css";
 import axios from "axios";
 
 function Modal({ onClose, editData }) {
-  const [form, setForm] = useState(editData || {
-    code: "", type: "Percentage", value: "", minOrder: "", usageLimit: "", expiry: "", status: "Active"
-  });
+  if (!editData) return null;
+
+  const fields = [
+    { label: "Username", value: editData.Username, icon: "👤" },
+    { label: "Email", value: editData.Email, icon: "✉️" },
+    { label: "Phone", value: editData.Phone || "Not provided", icon: "📞" },
+    { label: "Address", value: editData.Address || "Not provided", icon: "📍" },
+    { label: "Role", value: editData.role?.charAt(0).toUpperCase() + editData.role?.slice(1) || "User", icon: "🛡️" },
+  ];
+
+  const initials = (editData.Username || "U").slice(0, 2).toUpperCase();
 
   return (
     <div style={{
@@ -15,102 +23,107 @@ function Modal({ onClose, editData }) {
     }}>
       <div style={{
         background: "#fff", borderRadius: "20px", width: "100%", maxWidth: "480px",
-        padding: "32px", boxShadow: "0 24px 60px rgba(147,51,234,0.18)",
+        padding: "0", boxShadow: "0 24px 60px rgba(147,51,234,0.18)",
         animation: "fadeUp 0.3s ease",
         fontFamily: "'DM Sans',sans-serif",
+        overflow: "hidden",
       }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "#1a0a2e" }}>
-              {editData ? "Edit Discount" : "Create New Discount"}
-            </h2>
-            <p style={{ margin: "4px 0 0", fontSize: "12.5px", color: "#9ca3af" }}>
-              {editData ? "Update promo code details" : "Add a new promo code for your store"}
-            </p>
-          </div>
+        {/* Header with avatar */}
+        <div style={{
+         background: "var(--brand-gradient)",
+          padding: "32px 32px 40px",
+          position: "relative",
+        }}>
           <button onClick={onClose} style={{
+            position: "absolute", top: "16px", right: "16px",
             width: "34px", height: "34px", borderRadius: "50%",
-            border: "1.5px solid #e9d5ff", background: "#faf5ff",
+            border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.15)",
             cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "16px", color: "#9333ea",
+            fontSize: "16px", color: "#fff", backdropFilter: "blur(4px)",
           }}>×</button>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {[
-            { label: "Name", key: "code", placeholder: "e.g. SUMMER25", type: "text" },
-            { label: "Email", key: "value", placeholder: "e.g. 25", type: "number" },
-            { label: "Minimum Order (Rs)", key: "minOrder", placeholder: "e.g. 500", type: "number" },
-            { label: "Usage Limit", key: "usageLimit", placeholder: "e.g. 100", type: "number" },
-            { label: "Expiry Date", key: "expiry", placeholder: "", type: "date" },
-          ].map(field => (
-            <div key={field.key}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#6b7280", marginBottom: "6px", letterSpacing: "0.04em" }}>
-                {field.label.toUpperCase()}
-              </label>
-              <input
-                type={field.type}
-                placeholder={field.placeholder}
-                value={form[field.key]}
-                onChange={e => setForm({ ...form, [field.key]: e.target.value })}
-                style={{
-                  width: "100%", padding: "10px 14px",
-                  border: "1.5px solid #e9d5ff", borderRadius: "10px",
-                  fontSize: "13.5px", color: "#1a0a2e",
-                  outline: "none", fontFamily: "'DM Sans',sans-serif",
-                  background: "#fefcff", boxSizing: "border-box",
-                }}
-              />
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{
+              width: "64px", height: "64px", borderRadius: "50%",
+               background: "var(--brand-gradient)", border: "2.5px solid rgba(255,255,255,0.5)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "22px", fontWeight: 800, color: "#fff",
+              letterSpacing: "0.05em", backdropFilter: "blur(4px)",
+            }}>
+              {initials}
             </div>
-          ))}
-
-          <div>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#6b7280", marginBottom: "6px", letterSpacing: "0.04em" }}>
-              TYPE
-            </label>
-            <select
-              value={form.type}
-              onChange={e => setForm({ ...form, type: e.target.value })}
-              style={{
-                width: "100%", padding: "10px 14px",
-                border: "1.5px solid #e9d5ff", borderRadius: "10px",
-                fontSize: "13.5px", color: "#1a0a2e",
-                outline: "none", fontFamily: "'DM Sans',sans-serif",
-                background: "#fefcff", boxSizing: "border-box",
-              }}
-            >
-              <option>Percentage</option>
-              <option>Fixed Amount</option>
-              <option>Free Shipping</option>
-            </select>
+            <div>
+              <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "#fff" }}>
+                {editData.Username}
+              </h2>
+              <p style={{ margin: "4px 0 0", fontSize: "13px", color: "rgba(255,255,255,0.8)" }}>
+                {editData.Email}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "10px", marginTop: "28px" }}>
+        {/* Customer details */}
+        <div style={{ padding: "28px 32px 32px" }}>
+          <h3 style={{
+            margin: "0 0 18px", fontSize: "11.5px", fontWeight: 700,
+            color: "#9ca3af", letterSpacing: "0.1em", textTransform: "uppercase",
+          }}>
+            Customer Details
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+            {fields.map((field, i) => (
+              <div key={field.label} style={{
+                display: "flex", alignItems: "center", gap: "14px",
+                padding: "14px 16px",
+                background: i % 2 === 0 ? "#faf5ff" : "#fff",
+                borderRadius: "10px",
+              }}>
+                <span style={{ fontSize: "18px", width: "28px", textAlign: "center" }}>{field.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontSize: "11px", fontWeight: 600, color: "#9ca3af",
+                    letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "2px",
+                  }}>
+                    {field.label}
+                  </div>
+                  <div style={{
+                    fontSize: "14px", fontWeight: 600, color: "#1a0a2e",
+                    wordBreak: "break-word",
+                  }}>
+                    {field.value}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ID badge */}
+          <div style={{
+            marginTop: "20px", padding: "10px 16px",
+            background: "#f3f4f6", borderRadius: "10px",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}>
+            <span style={{ fontSize: "11px", fontWeight: 600, color: "#9ca3af", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              Customer ID
+            </span>
+            <span style={{
+              fontSize: "12px", fontWeight: 700, color: "#6b7280",
+              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+              background: "#e5e7eb", padding: "4px 10px", borderRadius: "6px",
+            }}>
+              #{editData._id?.slice(0, 12).toUpperCase()}
+            </span>
+          </div>
+
           <button onClick={onClose} style={{
-            flex: 1, padding: "11px", borderRadius: "10px",
-            border: "1.5px solid #e9d5ff", background: "#fff",
-            fontSize: "13.5px", fontWeight: 600, color: "#6b7280",
-            cursor: "pointer", fontFamily: "'DM Sans',sans-serif",
-          }}>Cancel</button>
-          {editData ? <button onClick={onClose} style={{
-            flex: 2, padding: "11px", borderRadius: "10px",
-            border: "none", background: "linear-gradient(135deg,#9333ea,#c084fc)",
+            width: "100%", marginTop: "24px", padding: "12px", borderRadius: "12px",
+            border: "none", background: "var(--brand-gradient)",
             fontSize: "13.5px", fontWeight: 700, color: "#fff",
             cursor: "pointer", fontFamily: "'DM Sans',sans-serif",
             boxShadow: "0 4px 14px rgba(147,51,234,0.3)",
           }}>
-            Save Changes
+            Close
           </button>
-            : <button onClick={onClose} style={{
-              flex: 2, padding: "11px", borderRadius: "10px",
-              border: "none", background: "linear-gradient(135deg,#9333ea,#c084fc)",
-              fontSize: "13.5px", fontWeight: 700, color: "#fff",
-              cursor: "pointer", fontFamily: "'DM Sans',sans-serif",
-              boxShadow: "0 4px 14px rgba(147,51,234,0.3)",
-            }}>
-              Create Customer
-            </button>}
         </div>
       </div>
     </div>
@@ -147,11 +160,11 @@ export default function AdminCustomers() {
             <div className="admin-card-title">Customers</div>
             <div className="admin-muted">Customer list and basic insights.</div>
           </div>
-          <div>
+          {/* <div>
             <button onClick={() => setShowModal(true)} className="admin-primary-btn">
               + Create Customer
             </button>
-          </div>
+          </div> */}
         </div>
 
         <div className="admin-table admin-mt">
@@ -164,7 +177,7 @@ export default function AdminCustomers() {
           </div>
           {data.map((c) => (
             <div key={c._id} className="admin-table-row">
-              <div className="admin-mono">#{c._id.slice(0, 7)}</div>
+              <div className="admin-mono">#{c._id.slice(0, 7).toUpperCase()}</div>
               <div className="admin-strong">{c.Username}</div>
               <div className="admin-muted">{c.Email}</div>
               {/* Actions */}
@@ -179,11 +192,10 @@ export default function AdminCustomers() {
                     border: "1.5px solid #e9d5ff", background: "#faf5ff",
                     cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
                   }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9333ea" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
+                ><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9333ea" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
                 </button>
 
                 {/* Delete */}

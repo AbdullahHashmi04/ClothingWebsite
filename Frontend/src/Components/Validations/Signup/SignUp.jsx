@@ -37,7 +37,6 @@ function SignUp() {
 
   return (
     <div className="flex bg-gradient-to-br from-slate-50 via-purple-50/40 to-pink-50/30" style={{ minHeight: 'calc(100vh - 5rem)' }}>
-      {/* ─── Right Form Panel ─── */}
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -212,20 +211,7 @@ function SignUp() {
                 <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.Address.message}</p>
               )}
             </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-            {/* Submit */}
+                        {/* Submit */}
             <button
               type="submit"
               disabled={isSubmitting}

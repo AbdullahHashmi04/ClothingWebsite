@@ -21,7 +21,7 @@ router.get("/", async (req, res) => {
 // Multer config for product images
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const dir = join(__dirname, '../uploads/products');
+        const dir = join(__dirname, '../../uploads/products');
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }

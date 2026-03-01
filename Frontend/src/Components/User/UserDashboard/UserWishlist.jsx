@@ -1,9 +1,30 @@
 import { useState } from "react";
-import { C, WISHLIST, Card, SectionTitle, Btn } from "./shared";
+import { C, Card, SectionTitle, Btn } from "./shared";
+import { useEffect } from "react";
+import axios from "axios";
+import { useContext } from "react";
+import  CartContext  from "../../Context/CartContext";
 
 export default function UserWishlist() {
-  const [items, setItems] = useState(WISHLIST);
+  const [items, setItems] = useState([]);
   const remove = (id) => setItems(items.filter(i => i.id !== id));
+  const {user} = useContext(CartContext)
+
+
+  useEffect(() => {
+
+    const fetch = async () => {
+      console.log("Email is ",user.Email)
+      const res = await axios.get(`http://localhost:3000/wishlist/${user.Email}`)
+      console.log(res.data)
+      setItems(res.data)
+    }
+
+    fetch()
+
+  },[])
+
+
 
   return (
     <Card>

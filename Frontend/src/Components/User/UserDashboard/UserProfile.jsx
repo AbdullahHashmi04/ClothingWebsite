@@ -5,7 +5,7 @@ import { C, Badge, Card, SectionTitle, Btn } from "./shared";
 export default function UserProfile() {
   const [editing, setEditing] = useState(false);
   const { user } = useContext(CartContext);
-  const [form, setForm] = useState({ Username: user.Username, email: user.Email, phone: "+92 300 1234567", dob: "1995-06-15", gender: "Male" });
+  const [form, setForm] = useState({ Username: user.Username, email: user.Email, phone: user.Phone || "+92-XXXXXXXXX",gender: "Male" });
 
   const Field = ({ label, k, type = "text" }) => (
     <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
@@ -21,6 +21,7 @@ export default function UserProfile() {
       )}
     </div>
   );
+  const initials = user.Username.slice(0,2).toUpperCase();
 
   return (
     <Card>
@@ -37,7 +38,7 @@ export default function UserProfile() {
           fontSize: 28, fontWeight: 700, color: "#fff", fontFamily: "'Sora',sans-serif",
           boxShadow: `0 4px 16px rgba(124,58,237,0.35)`,
           flexShrink: 0,
-        }}> {user.picture ? <img src={user.picture} alt={user.Username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div>NA</div>}</div>
+        }}> {user.picture ? <img src={user.picture} alt={user.Username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div>{initials}</div>}</div>
         <div>
           <div style={{ fontWeight: 700, fontSize: 18, color: C.text, fontFamily: "'Sora',sans-serif" }}>{user.Username}</div>
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
@@ -52,7 +53,6 @@ export default function UserProfile() {
         <Field label="Username" k="Username" />
         <Field label="Email" k="email" type="email" />
         <Field label="Phone" k="phone" type="tel" />
-        <Field label="Date of Birth" k="dob" type="date" />
         <Field label="Gender" k="gender" />
       </div>
     </Card>

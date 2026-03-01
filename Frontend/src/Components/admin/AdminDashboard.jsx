@@ -35,7 +35,6 @@ export default function AdminDashboard() {
     { label: "Conversion", value: "2.9%", delta: "+0.4%" },
   ];
 
-
   return (
     <div className="admin-stack">
       <section className="admin-kpi-grid">
@@ -58,16 +57,25 @@ export default function AdminDashboard() {
           <div className="admin-table">
             <div className="admin-table-head">
               <div>Order</div>
-              <div>Customer</div>
-              <div>Status</div>
+              <div>Phone</div>
+              <div className="justify-center flex">Status</div>
               <div className="admin-right">Total</div>
             </div>
             {ordersData.slice(0, 6).map((o) => (
               <div key={o._id} className="admin-table-row">
-                <div className="admin-mono">#{o._id.slice(0, 7)}</div>
-                <div className="font-bold">{o.FullName}</div>
-                <div className="font-bold">{o.Status}</div>
-                <div className="flex justify-end bold">{o.Total}</div>
+                <div className="admin-mono">#{o._id.slice(-7).toUpperCase()}</div>
+                <div className="font-bold">+{o.Phone}</div>
+                    <span style={{
+            padding: "6px 16px", borderRadius: "20px", fontSize: "12px",
+            fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em",
+            background: "#ecfdf5", color: "#059669",
+            border: `1.5px solid #a7f3d0`,
+          }} className="flex justify-center">
+            ● {o.Status}
+          </span>
+
+
+                <div className="flex justify-end font-bold">Rs./ {o.Total}</div>
                 {/* <div> 
                   <span className={`admin-pill admin-pill-${o.status.toLowerCase()}`}
                   >
@@ -84,19 +92,19 @@ export default function AdminDashboard() {
 
           <div className="admin-card-title">Quick Actions</div>
           <div className="admin-actions-grid">
-            <button className="admin-action">
+            <button className="admin-action" type="button" onClick={()=>{ window.location.href="/admin/discounts";}}>
               <div className="admin-action-title">Create Discount</div>
               <div className="admin-action-sub">Boost sales with promo codes</div>
             </button>
-            <button className="admin-action" type="button">
+            <button className="admin-action" type="button" onClick={()=>{window.location.href="/admin/products";}}>
               <div className="admin-action-title">View Low Stock</div>
               <div className="admin-action-sub">Restock before items run out</div>
             </button>
-            <button className="admin-action" type="button">
+            <button className="admin-action" type="button" onClick={()=>{window.location.href = "/admin/orders";}}>
               <div className="admin-action-title">Export Orders</div>
               <div className="admin-action-sub">Download last 30 days report</div>
             </button>
-            <button className="admin-action" type="button">
+            <button className="admin-action" type="button" onClick={()=>{ window.location.href = "/admin/customers";}}>
               <div className="admin-action-title">Manage Users</div>
               <div className="admin-action-sub">Control admin access permissions</div>
             </button>
