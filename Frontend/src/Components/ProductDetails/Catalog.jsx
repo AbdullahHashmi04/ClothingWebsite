@@ -125,9 +125,6 @@ export default function ClothingCatalog() {
                 {filteredProducts.map((item, index) => {
                   const price = item.price || Math.floor(Math.random() * 200) + 20;
                   const discount = item.discountPercentage ? Math.round(item.discountPercentage) : null;
-
-                  { console.log(item.imageUrl) }
-
                   return (
                     <motion.div
                       key={item.id}

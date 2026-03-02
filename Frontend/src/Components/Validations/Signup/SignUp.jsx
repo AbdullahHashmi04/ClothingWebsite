@@ -185,6 +185,9 @@ function SignUp() {
                 <input
                   type="tel"
                   placeholder="+92 (555) 123-4567"
+                  {...register("Phone", {
+                    pattern: {
+                      value: /^\+?[1-9]\d{1,14}$/,}})}
                   className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all duration-200"
                   style={{ minHeight: '48px' }}
                 />
@@ -203,6 +206,7 @@ function SignUp() {
                 <input
                   type="text"
                   placeholder="Enter your address"
+                  {...register("Address")}
                   className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all duration-200"
                   style={{ minHeight: '48px' }}
                 />

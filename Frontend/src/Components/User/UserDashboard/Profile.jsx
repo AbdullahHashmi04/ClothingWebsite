@@ -12,9 +12,10 @@ export default function UserProfile() {
 
   const onsubmit = async (form) => {
     try {
-      console.log("Submitting:", user.Email);
-      const res = await axios.put(`http://localhost:3000/customers/updatecustomer/${encodeURIComponent(user.Email)}`, { form });
-      console.log("Form submitted with data:", res.data);
+      console.log("Submitting:", user._id);
+      const res = await axios.put(`http://localhost:3000/customers/updatecustomer/${user._id}`, form, {
+        headers: { "Content-Type": "application/json" }
+      });
       setEditing(false);
     } catch (err) {
       console.error("Update failed:", err);
