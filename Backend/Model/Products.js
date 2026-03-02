@@ -18,17 +18,17 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Product price is required'],
     min: 0
   },
-  // originalPrice: {
-  //   type: Number,
-  //   min: 0
-  // },
-  // category: {
-  //   type: String,
-  //   required: true,
-  //   enum: ['shirts', 'pants', 'dresses', 'jackets', 'shoes', 'accessories', 'other', 'men', 'women', 'kids']
-  // },
   imageUrl: {
     type: String
+  },
+  originalPrice: {
+    type: Number,
+    min: 0
+  },
+  category: {
+    type: String,
+    required: true,
+    enum: ['shirts', 'pants', 'Jeans','dresses', 'jackets', 'shoes', 'accessories', 'other', 'men', 'women', 'kids']
   },
   // additionalImages: [{
   //   type: String

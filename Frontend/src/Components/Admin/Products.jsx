@@ -28,6 +28,7 @@ function Modal({ onClose, editData }) {
       formData.append("description", form.description);
       formData.append("price", form.price);
       formData.append("stock", form.stock);
+      formData.append("category", form.category);
       if (imageFile) {
         formData.append("image", imageFile);
       }
@@ -48,11 +49,12 @@ function Modal({ onClose, editData }) {
       formData.append("description", form.description);
       formData.append("price", form.price);
       formData.append("stock", form.stock);
+      formData.append("category", form.category);
       if (imageFile) {
         formData.append("image", imageFile);
       }
 
-      const response = await axios.put(`http://localhost:3000/products/updateProduct/${editData.id}`, formData, {
+       await axios.put(`http://localhost:3000/products/updateProduct/${editData.id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
       onClose();
@@ -97,6 +99,7 @@ function Modal({ onClose, editData }) {
               { label: "Product Name", key: "name", placeholder: "e.g. PR-XXX", type: "text" },
               { label: "Product Description", key: "description", placeholder: "e.g. White-Jeans", type: "text" },
               { label: "Price (Rs)", key: "price", placeholder: "e.g. 1000", type: "number" },
+              { label: "Category", key: "category", placeholder: "e.g. Men", type: "text" },
               { label: "Stock", key: "stock", placeholder: "e.g. 50", type: "number" },
             ].map(field => (
               <div key={field.key}>
