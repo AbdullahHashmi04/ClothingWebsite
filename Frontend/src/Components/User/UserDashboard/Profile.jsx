@@ -1,10 +1,11 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import CartContext from "../../Context/CartContext";
 import { C, Badge, Card, SectionTitle, Btn } from "./shared";
 
 export default function UserProfile() {
   const [editing, setEditing] = useState(false);
   const { user } = useContext(CartContext);
+  const [initials, setInitials] = useState(user.Username ? user.Username.slice(0,1).toUpperCase() : "U");
   const [form, setForm] = useState({ Username: user.Username, email: user.Email, phone: user.Phone || "+92-XXXXXXXXX",gender: "Male" });
 
   const Field = ({ label, k, type = "text" }) => (
@@ -21,14 +22,12 @@ export default function UserProfile() {
       )}
     </div>
   );
-  const initials = user.Username.slice(0,2).toUpperCase();
 
   return (
     <Card>
       <SectionTitle action={<Btn variant={editing ? "primary" : "ghost"} small onClick={() => setEditing(!editing)}>{editing ? "✓ Save" : "✏️ Edit"}</Btn>}>
         My Profile
       </SectionTitle>
-
       {/* Avatar row */}
       <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 28, padding: "18px 20px", background: C.brandLight, borderRadius: 14 }}>
         <div style={{

@@ -35,7 +35,6 @@ router.delete('/deleteorder/:id', async (req, res) => {
 
 router.get('/getUserOrders/:Email', async (req, res) => {
 
-    console.log("Fetching orders for user: ", req.params.Email)
     const { Email } = req.params;
     const orders = await OrderDetails.find({ Email: Email });
     console.log(orders)

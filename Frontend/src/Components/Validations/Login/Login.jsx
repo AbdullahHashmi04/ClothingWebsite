@@ -23,24 +23,30 @@ export default function LoginPage() {
   const handleGoogleLogin = () => {
     window.location.href = "http://localhost:3000/googleLogin";
   };
+const onSubmit = async (data) => {
+  try {
+    const res = await axios.post("http://localhost:3000/login", data);
 
-  const onSubmit = async (data) => {
-    try {
-      console.log("Submitting login with data:", data);
-      if (data.Email === "admin@admin.com" && data.Password === "admin123") {
-        navigate("/admin");
-        return;
-      }
-      const res = await axios.post("http://localhost:3000/login", data);
-      setLoginStatus(true);
-      console.log("Login successful:", res.data);
-      setUserInfo(res.data.query);
-      navigate("/");
-    } catch (err) {
-      setResponseData("Login failed. Check your credentials.");
+    const { token } = res.data;
+    const { query } = res.data;
+
+    // Save token in localStorage for persistence
+    localStorage.setItem("token", token); 
+
+    setUserInfo(query);   // store user object in state
+    setLoginStatus(true);
+
+    if (query.role === "admin") {
+      navigate("/admin");
+      return;
     }
-  };
 
+    navigate("/");
+
+  } catch (err) {
+    setResponseData("Login failed. Check your credentials.");
+  }
+};
   return (
     <div className="flex bg-gradient-to-br from-slate-50 via-purple-50/40 to-pink-50/30" style={{ minHeight: 'calc(100vh - 5rem)' }}>
 

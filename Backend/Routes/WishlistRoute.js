@@ -36,7 +36,6 @@ router.post("/add", async (req, res) => {
 router.get("/:Email", async (req, res) => {
   try {
     const wishlist = await Wishlist.findOne({ Email: req.params.Email });
-    console.log("Wishlist found: ", wishlist)
     res.status(200).json(wishlist ? wishlist.items : []);
   } catch (error) {
     res.status(500).json({ message: "Server error" });

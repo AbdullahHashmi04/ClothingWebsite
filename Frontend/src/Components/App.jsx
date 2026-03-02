@@ -27,9 +27,9 @@ function App() {
         config={config}
       />
       {/* <div style={{ height: "100vh", background: "#0f172a" }}>
-      <Snowfall /> */}
+      <Snowfall /> 
+       </div> */}
       <Footer />
-      {/* </div> */}
     </div>
   )
 }

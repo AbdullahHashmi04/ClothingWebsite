@@ -27,21 +27,17 @@ router.post("/", async (req, res) => {
                 await user.save(); // pre-save hook hashes it
             }
         }
-
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
         const token = jwt.sign(
-            { id: user._id },
+            { id: user._id ,role: user.role},
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
         );
 
-        const userResponse = user.toObject();
-        delete userResponse.Password;
-
-        res.status(200).json({ token, query: userResponse });
+        res.status(200).json({ token, query: user });
     } catch (error) {
         res.status(500).json({ message: "Login failed", error: error.message });
     }

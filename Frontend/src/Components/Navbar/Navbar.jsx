@@ -1,5 +1,5 @@
 import { useState, useRef, useContext, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation,useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import "material-design-iconic-font/dist/css/material-design-iconic-font.min.css";
 import {
@@ -27,7 +27,7 @@ const LogoutIcon = () => (
 );
 
 function Avatar({ name, avatarUrl, size = 36 }) {
-  const initials = name.slice(0,2).toUpperCase();
+  const [initials, setInitials] = useState(name ? name.slice(0,1).toUpperCase() : "U");
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%", overflow: "hidden",
@@ -74,8 +74,9 @@ function UserDropdown() {
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
   const triggerRef = useRef(null);
-  const { logout } = useAuth0();
-  const { user } = useContext(CartContext);
+  const {  setUserInfo, setLoginStatus } = useContext(CartContext);
+    const navigate = useNavigate();
+   const { user } = useContext(CartContext);
   useEffect(() => {
     const handler = (e) => { if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false); };
     document.addEventListener("mousedown", handler);
@@ -88,6 +89,13 @@ function UserDropdown() {
     return () => document.removeEventListener("keydown", handler);
   }, []);
 
+  const logout = () => {
+  localStorage.removeItem("token");
+  setUserInfo(null);
+  setLoginStatus(false);
+  navigate("/login");
+
+};
   return (
     <>
       <style>{`
@@ -169,10 +177,7 @@ function UserDropdown() {
             <div style={{ height: "1px", background: "rgba(200,168,75,0.12)", margin: "2px 14px" }} />
 
             <ul role="presentation" style={{ listStyle: "none", margin: 0, padding: "6px 0 8px" }}>
-              <MenuItem icon={<LogoutIcon />} label="Log out" onClick={() =>
-                logout({
-                  logoutParams: { returnTo: window.location.origin },
-                })
+              <MenuItem icon={<LogoutIcon />} label="Log out" onClick={() => {logout()}
               } variant="danger" index={2} />
             </ul>
           </div>
@@ -191,7 +196,7 @@ export default function Navbar() {
 
   const ref = useRef();
 
-  const { isAuthenticated, logout } = useAuth0();
+  const { isAuthenticated } = useAuth0();
 
   useEffect(() => {
     const handleScroll = () => {

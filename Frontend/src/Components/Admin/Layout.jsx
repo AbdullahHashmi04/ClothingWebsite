@@ -1,6 +1,6 @@
 import { NavLink, Link, Outlet } from "react-router-dom";
 import "../../Style/Admin.css";
-
+import Footer from "../Footer/Footer";
 const navItems = [
   { to: "/admin", label: "Dashboard" },
   { to: "/admin/products", label: "Products" },

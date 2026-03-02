@@ -11,25 +11,26 @@ import { CartProvider } from './Components/Context/CartContext.jsx';
 import Cart from './Components/Cart/Cart.jsx';
 import About from './Components/About/About.jsx';
 import OrderForm from './Components/OrderForm/OrderForm.jsx';
-import AdminLayout from './Components/admin/AdminLayout.jsx';
-import AdminDashboard from './Components/admin/AdminDashboard.jsx';
-import AdminProducts from './Components/admin/AdminProducts.jsx';
-import AdminOrders from './Components/admin/AdminOrders.jsx';
-import AdminCustomers from './Components/admin/AdminCustomers.jsx';
-import AdminDiscounts from './Components/admin/AdminDiscounts.jsx';
+import AdminLayout from './Components/Admin/Layout.jsx';
+import AdminDashboard from './Components/Admin/Dashboard.jsx';
+import AdminProducts from './Components/Admin/Products.jsx';
+import AdminOrders from './Components/Admin/Orders.jsx';
+import AdminCustomers from './Components/Admin/Customers.jsx';
+import AdminDiscounts from './Components/Admin/Discounts.jsx';
 import Vto from './Components/Ai/VirtualTryOn/vto.jsx';
 import Trending from './Components/Ai/TrendingFeature/trending.jsx';
-import UserLayout from './Components/User/UserDashboard/UserLayout.jsx'
-import UserProfile from './Components/User/UserDashboard/UserProfile.jsx'
-import UserOrders from './Components/User/UserDashboard/UserOrders.jsx'
-import UserReturns from './Components/User/UserDashboard/UserReturns.jsx'
-import UserWishlist from './Components/User/UserDashboard/UserWishlist.jsx'
-import UserAddresses from './Components/User/UserDashboard/UserAddresses.jsx'
-import UserCheckout from './Components/User/UserDashboard/UserCheckout.jsx'
+import UserLayout from './Components/User/UserDashboard/Layout.jsx'
+import UserProfile from './Components/User/UserDashboard/Profile.jsx'
+import UserOrders from './Components/User/UserDashboard/Orders.jsx'
+import UserReturns from './Components/User/UserDashboard/Returns.jsx'
+import UserWishlist from './Components/User/UserDashboard/Wishlist.jsx'
+import UserAddresses from './Components/User/UserDashboard/Addresses.jsx'
+import UserCheckout from './Components/User/UserDashboard/Checkout.jsx'
 import { Auth0Provider } from '@auth0/auth0-react';
 import AuthCallback from './Components/AuthCallBack/AuthCallback.jsx';
-import Feedback from './Components/User/FeedbackForm/Feedback.jsx';
-import AdminFeedback from './Components/admin/AdminFeedback.jsx';
+import Feedback from './Components/User/UserDashboard/Feedback.jsx';
+import AdminFeedback from './Components/Admin/Feedback.jsx';
+import AdminRoute from './Components/Admin/AdminRoute/AdminRoute.jsx';
 
 const router = createBrowserRouter([
   {
@@ -51,8 +52,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/admin",
-    element: <AdminLayout />,
+    element: <AdminRoute />,
     children: [
+      { 
+        element: <AdminLayout />, 
+        children: [
       { index: true, element: <AdminDashboard /> },
       { path: "products", element: <AdminProducts /> },
       { path: "orders", element: <AdminOrders /> },
@@ -60,7 +64,7 @@ const router = createBrowserRouter([
       { path: "discounts", element: <AdminDiscounts /> },
       { path: "feedback", element: <AdminFeedback /> }
     ],
-  },
+  }]},
   {
     path: "/userDashboard",
     element: <UserLayout />,
@@ -72,8 +76,9 @@ const router = createBrowserRouter([
       { path: "addresses", element: <UserAddresses /> },
       { path: "checkout", element: <UserCheckout /> },
     ],
-  }
-]);
+  }]);
+
+
 createRoot(document.getElementById('root')).render(
   <Auth0Provider>
     <CartProvider>

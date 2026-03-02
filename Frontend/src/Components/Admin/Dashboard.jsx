@@ -21,7 +21,6 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetch = async () => {
       let response = await axios("http://localhost:3000/orders/getorders");
-      console.log(response.data)
       setOrdersData(response.data);
     }
     fetch();

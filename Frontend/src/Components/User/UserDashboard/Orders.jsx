@@ -22,7 +22,6 @@ const UserOrder = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        console.log("User is :", user);
         const token = localStorage.getItem("token");
         const res = await axios.get(
           `http://localhost:3000/orders/getUserOrders/${user.Email}`,
@@ -30,7 +29,6 @@ const UserOrder = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        console.log(res.data);
         setOrders(res.data);
       } catch (error) {
         console.error("Error fetching orders:", error);

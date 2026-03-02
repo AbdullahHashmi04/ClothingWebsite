@@ -14,14 +14,10 @@ export default function UserWishlist() {
   useEffect(() => {
 
     const fetch = async () => {
-      console.log("Email is ",user.Email)
       const res = await axios.get(`http://localhost:3000/wishlist/${user.Email}`)
-      console.log(res.data)
       setItems(res.data)
     }
-
     fetch()
-
   },[])
 
 
