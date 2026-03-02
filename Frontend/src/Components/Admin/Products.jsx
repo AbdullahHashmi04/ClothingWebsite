@@ -247,7 +247,7 @@ export default function AdminProducts() {
               <div className="admin-strong">
                 <span>{p.name}</span>
               </div>
-              <div className="admin-right">{p.price}</div>
+              <div className="admin-right font-bold">Rs./{p.price}</div>
               <div className="flex gap-2 justify-end">
 
                 {/* Edit */}

@@ -50,13 +50,13 @@ export default function HeroSlider() {
     return () => clearInterval(timer);
   }, []);
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  };
+  // const nextSlide = () => {
+  //   setCurrentSlide((prev) => (prev + 1 - slides.length) % slides.length);
+  // };
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
+  // const prevSlide = () => {
+  //   setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  // };
 
   const setCatalog = (data) => {
     setCategory(data);
@@ -64,8 +64,6 @@ export default function HeroSlider() {
 
 
 const addToWishlist = async (item) => {
-    console.log("Adding to wishlist: ", item);
-
     if (user && user.Email) {
       try {
         const res = await axios.post("http://localhost:3000/wishlist/add", {
@@ -77,7 +75,6 @@ const addToWishlist = async (item) => {
             imageUrl: item.imageUrl,
           },
         });
-        console.log("Added to wishlist:", res.data);
         alert("Added to wishlist!");
       } catch (error) {
         if (error.response?.status === 409) {
@@ -162,7 +159,7 @@ const addToWishlist = async (item) => {
           </motion.div>
         ))}
 
-        <button
+        {/* <button
           onClick={prevSlide}
           className="hero-nav-button hero-nav-button-prev"
           aria-label="Previous slide"
@@ -176,7 +173,7 @@ const addToWishlist = async (item) => {
           aria-label="Next slide"
         >
           <ChevronRight className="hero-nav-icon" />
-        </button>
+        </button> */}
 
         <div className="hero-indicators">
           {slides.map((_, index) => (
@@ -193,7 +190,7 @@ const addToWishlist = async (item) => {
 
       {/* Featured Products Section */}
       <section className="relative w-full py-20 bg-gradient-to-b from-white via-purple-50/20 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-auto mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

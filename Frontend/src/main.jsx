@@ -25,7 +25,6 @@ import UserOrders from './Components/User/UserDashboard/Orders.jsx'
 import UserReturns from './Components/User/UserDashboard/Returns.jsx'
 import UserWishlist from './Components/User/UserDashboard/Wishlist.jsx'
 import UserAddresses from './Components/User/UserDashboard/Addresses.jsx'
-import UserCheckout from './Components/User/UserDashboard/Checkout.jsx'
 import { Auth0Provider } from '@auth0/auth0-react';
 import AuthCallback from './Components/AuthCallBack/AuthCallback.jsx';
 import Feedback from './Components/User/UserDashboard/Feedback.jsx';
@@ -74,7 +73,6 @@ const router = createBrowserRouter([
       { path: "returns", element: <UserReturns /> },
       { path: "wishlist", element: <UserWishlist /> },
       { path: "addresses", element: <UserAddresses /> },
-      { path: "checkout", element: <UserCheckout /> },
     ],
   }]);
 

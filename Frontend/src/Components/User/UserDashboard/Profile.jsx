@@ -1,31 +1,67 @@
 import { useContext, useEffect, useState } from "react";
 import CartContext from "../../Context/CartContext";
 import { C, Badge, Card, SectionTitle, Btn } from "./shared";
+import axios from "axios";
 
 export default function UserProfile() {
   const [editing, setEditing] = useState(false);
   const { user } = useContext(CartContext);
   const [initials, setInitials] = useState(user.Username ? user.Username.slice(0,1).toUpperCase() : "U");
-  const [form, setForm] = useState({ Username: user.Username, email: user.Email, phone: user.Phone || "+92-XXXXXXXXX",gender: "Male" });
+  const [form, setForm] = useState({ Username: user.Username, Email: user.Email, Phone: user.Phone || "+92-XXXXXXXXX", Gender: user.Gender || "Male" });
 
-  const Field = ({ label, k, type = "text" }) => (
+
+  const onsubmit = async (form) => {
+    try {
+      console.log("Submitting:", user.Email);
+      const res = await axios.put(`http://localhost:3000/customers/updatecustomer/${encodeURIComponent(user.Email)}`, { form });
+      console.log("Form submitted with data:", res.data);
+      setEditing(false);
+    } catch (err) {
+      console.error("Update failed:", err);
+    }
+  }
+
+
+const onChange = (e) => {
+  setForm(prev => ({
+    ...prev,
+    [e.target.name]: e.target.value,
+  }));
+};
+
+
+
+  const Field = ({ label, k, type  }) => (
     <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
       <label style={{ fontSize: 12, fontWeight: 600, color: C.muted, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</label>
       {editing ? (
         <input
-          type={type} value={form[k]}
-          onChange={(e) => setForm({ ...form, [k]: e.target.value })}
+          type={type} 
+          name={k}
+          value={form[k] || ""}
+          onChange={onChange}
           style={{ padding: "10px 14px", borderRadius: 10, border: `1.5px solid ${C.brand}`, fontSize: 14, color: C.text, outline: "none", fontFamily: "'DM Sans',sans-serif" }}
         />
       ) : (
         <div style={{ padding: "10px 0", fontSize: 14, fontWeight: 500, color: C.text, borderBottom: `1px solid ${C.borderLight}` }}>{form[k]}</div>
       )}
-    </div>
+    </div>  
   );
 
   return (
     <Card>
-      <SectionTitle action={<Btn variant={editing ? "primary" : "ghost"} small onClick={() => setEditing(!editing)}>{editing ? "✓ Save" : "✏️ Edit"}</Btn>}>
+      <SectionTitle action={<Btn
+  variant={editing ? "primary" : "ghost"}
+  small
+  onClick={() => {
+    if (editing) {
+      onsubmit(form);
+    }
+    setEditing(!editing);
+  }}
+>
+  {editing ? "💾 Save" : "✏️ Edit"}
+</Btn>}>
         My Profile
       </SectionTitle>
       {/* Avatar row */}
@@ -40,19 +76,16 @@ export default function UserProfile() {
         }}> {user.picture ? <img src={user.picture} alt={user.Username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div>{initials}</div>}</div>
         <div>
           <div style={{ fontWeight: 700, fontSize: 18, color: C.text, fontFamily: "'Sora',sans-serif" }}>{user.Username}</div>
-          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-            <Badge label="Gold Member" bg={C.accentLight} color={C.accent} />
-            <Badge label="Verified ✓" bg={C.successLight} color={C.success} />
-          </div>
+
         </div>
         {editing && <Btn variant="outline" small style={{ marginLeft: "auto" }}>📷 Change Photo</Btn>}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px 24px" }}>
-        <Field label="Username" k="Username" />
-        <Field label="Email" k="email" type="email" />
-        <Field label="Phone" k="phone" type="tel" />
-        <Field label="Gender" k="gender" />
+        {Field({ label: "Username", k: "Username", type: "text" })}
+        {Field({ label: "Email", k: "Email", type: "email" })}
+        {Field({ label: "Phone", k: "Phone", type: "tel" })}
+        {/* {Field({ label: "Gender", k: "Gender", type: "text" })} */}
       </div>
     </Card>
   );

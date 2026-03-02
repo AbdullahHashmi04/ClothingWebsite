@@ -89,11 +89,15 @@ function UserDropdown() {
     return () => document.removeEventListener("keydown", handler);
   }, []);
 
+
+  useEffect(()=>{
+    console.log("User info updated: ", user);
+  },)
   const logout = () => {
   localStorage.removeItem("token");
   setUserInfo(null);
   setLoginStatus(false);
-  navigate("/login");
+  navigate("/");
 
 };
   return (

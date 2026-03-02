@@ -7,7 +7,6 @@ const NAV = [
   { to: "/userDashboard/returns", label: "Returns & Refunds", icon: "↩️" },
   { to: "/userDashboard/wishlist", label: "Wishlist", icon: "❤️" },
   { to: "/userDashboard/addresses", label: "Addresses", icon: "📍" },
-  { to: "/userDashboard/checkout", label: "Faster Checkout", icon: "⚡" },
 ];
 
 export default function UserLayout() {

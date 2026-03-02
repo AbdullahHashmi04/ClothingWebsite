@@ -173,6 +173,6 @@ img {
 }
 
 /* Prevent horizontal overflow */
-section, div {
+section {
   max-width: 100%;
 }

@@ -20,10 +20,16 @@ function Cart() {
   const { cart, removeFromCart, loginStatus } = useContext(CartContext);
   const [quantities, setQuantities] = useState({});
 
+  const Navigate = useNavigate();
+
   const totalPrice = cart.reduce((sum, item) => {
     const qty = quantities[item.id] || 1;
     return sum + item.price * qty;
   }, 0);
+
+  const discountRate = loginStatus ? 0.15 : 0;
+  const discountAmount = totalPrice * discountRate;
+  const finalPrice = totalPrice - discountAmount;
 
   const updateQuantity = (id, change) => {
     setQuantities((prev) => {
@@ -34,7 +40,7 @@ function Cart() {
   };
 
   const onSubmit = async (data) => {
-    console.log("Form Data is ", data);
+    console.log("Form Data is ", data); 
     let r = await axios.post("http://localhost:3000/order", {
       item: data,
     });
@@ -105,7 +111,7 @@ function Cart() {
                         {/* Image Container */}
                         <div className="w-full sm:w-40 h-48 sm:h-36 shrink-0 rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 relative">
                           <img
-                            src={item.image}
+                            src={item.imageUrl}
                             alt={item.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
@@ -177,7 +183,7 @@ function Cart() {
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 sticky top-24"
+                className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 sticky top-24 isolate"
               >
                 <h2 className="text-2xl font-bold text-slate-900 mb-6">
                   Order Summary
@@ -188,6 +194,12 @@ function Cart() {
                     <span>Subtotal</span>
                     <span className="text-slate-900">${totalPrice.toFixed(2)}</span>
                   </div>
+                  {loginStatus && (
+                    <div className="flex justify-between">
+                      <span className="text-emerald-600">Discount (15%)</span>
+                      <span className="text-emerald-600 font-semibold">-${discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Shipping estimate</span>
                     <span className="text-emerald-600 flex items-center gap-1">
@@ -202,9 +214,16 @@ function Cart() {
                   <div className="border-t border-slate-100 pt-5 mt-5">
                     <div className="flex justify-between items-end">
                       <span className="text-lg font-bold text-slate-900">Order Total</span>
-                      <span className="text-3xl font-extrabold text-slate-900">
-                        ${totalPrice.toFixed(2)}
-                      </span>
+                      <div className="text-right">
+                        {loginStatus && (
+                          <span className="text-sm text-slate-400 line-through block">
+                            ${totalPrice.toFixed(2)}
+                          </span>
+                        )}
+                        <span className="text-3xl font-extrabold text-slate-900">
+                          ${finalPrice.toFixed(2)}
+                        </span>
+                      </div>
                     </div>
                     <p className="text-xs text-slate-400 mt-2 text-right">
                       Including VAT
@@ -212,24 +231,36 @@ function Cart() {
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <Link to="/orderform" className="block">
-                    <button className="w-full flex items-center justify-center gap-2 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all font-bold text-lg shadow-lg shadow-indigo-600/25 active:scale-95">
-                      Checkout <ArrowLeft className="w-5 h-5 rotate-180" />
-                    </button>
+                <div className="space-y-3 relative z-10">
+                 <Link to='/orderform'> <button
+                    className="w-full flex items-center justify-center gap-2 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all font-bold text-lg shadow-lg shadow-indigo-600/25 active:scale-95 cursor-pointer relative z-10"
+                  >
+                    Checkout
+                    <ArrowLeft className="w-5 h-5 rotate-180 pointer-events-none" />
+                  </button>
                   </Link>
-
-                  <Link to="/catalog" className="block">
-                    <button className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 transition-all font-semibold active:scale-95">
+                  <Link to="/catalog" className="block relative z-10">
+                    <button className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 transition-all font-semibold active:scale-95 cursor-pointer relative z-10">
                       Continue Shopping
                     </button>
                   </Link>
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-center gap-4 text-slate-400">
-                  <CreditCard className="w-6 h-6" />
-                  <span className="text-xs font-semibold uppercase tracking-wider">Secure Payment</span>
-                </div>
+
+
+
+           {loginStatus ? (
+            <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-center gap-4 text-slate-400">
+              <span className="text-xs font-semibold animate-pulse uppercase tracking-wider">You are signed in!</span>
+            </div>
+           ) : (
+            <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-center gap-4 text-slate-400">
+              {/* <CreditCard className="w-6 h-6" /> */}
+             <Link to="/login" className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
+              <span className="text-xs font-semibold animate-pulse uppercase tracking-wider">Sign In to get 15% off</span>
+             </Link>
+            </div>
+           )}
               </motion.div>
             </div>
           </div>
