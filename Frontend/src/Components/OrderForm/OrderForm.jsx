@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import CartContext from "../Context/CartContext";
 import { motion } from "framer-motion";
@@ -40,6 +40,10 @@ const OrderForm = () => {
     }
   };
 
+  useEffect(() => {
+    console.log("User", user);
+  }, [user]);
+
   const totalPrice = cart.reduce((sum, item) => sum + item.price, 0);
 
   const discountRate = loginStatus ? 0.15 : 0;
@@ -54,8 +58,8 @@ const OrderForm = () => {
 
   return (
     <div className="min-h-screen flex flex-col justify-center bg-[#F8FAFC] pt-32 pb-12 font-sans text-slate-900">
-      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
+      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className=" mx-auto">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -98,12 +102,12 @@ const OrderForm = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                    <label className="gap-2 text-sm font-bold text-slate-700 mb-2 flex">
+                        <User className=" w-5 h-5 text-slate-400" />
                       Full Name
                     </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <User className="w-5 h-5 text-slate-400" />
+                    <div className="relative flex">
+                      <div className=" absolute inset-y-0 left-0 pl-4 flex items-center justify-end pointer-events-none">
                       </div>
                       <input
                         type="text"
@@ -123,12 +127,12 @@ const OrderForm = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                    <label className="gap-2 text-sm font-bold text-slate-700 mb-2 flex">
+                        <Mail className="w-5 h-5 text-slate-400" />
                       Email Address
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Mail className="w-5 h-5 text-slate-400" />
                       </div>
                       <input
                         type="email"
@@ -152,13 +156,11 @@ const OrderForm = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                    <label className="gap-2 text-sm font-bold text-slate-700 mb-2 flex">
+                        <Phone className="w-5 h-5 text-slate-400" />
                       Phone Number
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Phone className="w-5 h-5 text-slate-400" />
-                      </div>
                       <input
                         type="tel"
                         {...register("Phone", {
@@ -220,12 +222,12 @@ const OrderForm = () => {
 
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                    <label className="flex gap-2 text-sm font-bold text-slate-700 mb-2">
+                        <CreditCard className="w-5 h-5 text-slate-400" />
                       Card Number
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <CreditCard className="w-5 h-5 text-slate-400" />
                       </div>
                       <input
                         type="text"
@@ -290,9 +292,9 @@ const OrderForm = () => {
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-slate-900 rounded-3xl shadow-xl p-8 sticky top-24 text-white"
+                className="bg-slate-900 rounded-4xl gap-y-6 h-150 shadow-xl p-8 sticky top-24 text-white"
               >
-                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <h2 className="text-xl font-bold mb-6 flex justify-center items-center gap-2">
                   <ShoppingBag className="w-5 h-5" /> Order Summary
                 </h2>
 
@@ -330,9 +332,12 @@ const OrderForm = () => {
                   ))}
                 </div>
 
-                <div className="border-t border-white/10 pt-5 space-y-4">
+                <div className="border-t space-y-4  border-white/10 pt-5">
                   <div className="flex justify-between text-slate-300 text-sm">
                     <span>Subtotal</span>
+                     <span className="font-medium text-white justify-end -through">
+                        ${totalPrice.toFixed(2)}
+                      </span>
 
                     {loginStatus && (
                       <span className="font-medium text-white justify-end -through">

@@ -4,7 +4,7 @@ import {
   TrendingUp, Heart, Star, Award, Truck, Shield,
   RefreshCw, Users, CheckCircle, ArrowRight, Zap, Gift,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion ,AnimatePresence} from "framer-motion";
 import CartContext from "../Context/CartContext";
 import { Link } from "react-router-dom";
 import "../../Style/FeaturedProducts.css";
@@ -42,6 +42,7 @@ const slides = [
 export default function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const { mydata, setCategory, addToCart , user } = useContext(CartContext);
+  const [showWishlistToast, setShowWishlistToast] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -66,7 +67,7 @@ export default function HeroSlider() {
 const addToWishlist = async (item) => {
     if (user && user.Email) {
       try {
-        const res = await axios.post("http://localhost:3000/wishlist/add", {
+        await axios.post("http://localhost:3000/wishlist/add", {
           Email: user.Email,
           product: {
             _id: item._id,
@@ -75,7 +76,10 @@ const addToWishlist = async (item) => {
             imageUrl: item.imageUrl,
           },
         });
-        alert("Added to wishlist!");
+        setShowWishlistToast(true);
+          setTimeout(() => {
+            setShowWishlistToast(false);
+          }, 2000);
       } catch (error) {
         if (error.response?.status === 409) {
           alert("Item already in wishlist!");
@@ -93,7 +97,7 @@ const addToWishlist = async (item) => {
     addToCart(item)
   }
   return (
-    <>
+    <div className="w-full overflow-x-hidden">
       <div className="hero-section">
         {slides.map((slide, index) => (
           <motion.div
@@ -211,7 +215,7 @@ const addToWishlist = async (item) => {
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {mydata.slice(0, 24).map((item, index) => {
+            {mydata.slice(0, 8).map((item, index) => {
               const price = item.price || Math.floor(Math.random() * 200) + 20;
               const originalPrice = Math.floor(price * 1.3);
               const discount = Math.round(
@@ -336,7 +340,7 @@ const addToWishlist = async (item) => {
       </section>
 
       <section className="premium-collection-section">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-16 items-center mb-20">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
@@ -445,7 +449,7 @@ const addToWishlist = async (item) => {
       </section>
 
       <section className="why-choose-section">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -504,7 +508,7 @@ const addToWishlist = async (item) => {
       </section>
 
       <section className="stats-section">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -536,7 +540,7 @@ const addToWishlist = async (item) => {
 
       {/* Collections Section */}
       <section className="collections-section">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -622,10 +626,24 @@ const addToWishlist = async (item) => {
           </motion.div>
         </div>
       </section>
+           <AnimatePresence>
+            {showWishlistToast && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, y: 50 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: 50 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                className="catalog-toast"
+              >
+                <Heart className="catalog-toast-icon" />
+                <span className="catalog-toast-text">Added to Wishlist!</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
       {/* Testimonials Section */}
       <section className="testimonials-section">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -728,6 +746,6 @@ const addToWishlist = async (item) => {
           </motion.div>
         </div>
       </section> */}
-    </>
+    </div>
   );
 }

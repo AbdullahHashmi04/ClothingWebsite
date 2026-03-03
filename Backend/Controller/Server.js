@@ -19,6 +19,7 @@ import Customer from '../Routes/Admin/Customer.js'
 import AuthRoute from '../Routes/AuthRoute.js'
 import path from "path";
 import Feedback from "../Routes/Feedback.js"
+import ComplaintRoute from "../Routes/Complaint.js"
 import { adminOnly } from "../Middleware/adminMiddleware.js"
 import { authMiddleware } from "../Middleware/authMiddle.js"
 import WishlistRoute from "../Routes/WishlistRoute.js"
@@ -72,6 +73,7 @@ app.use('/trending', ClothTrending)
 
 //User
 app.use('/Feedback', Feedback)
+app.use('/complaints', ComplaintRoute)
 
 
 

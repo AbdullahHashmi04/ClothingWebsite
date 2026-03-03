@@ -5,10 +5,11 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
     try {
+
         const response = await axios.post(
             "https://openrouter.ai/api/v1/chat/completions",
             {
-                model: "openai/gpt-3.5-turbo",
+                model: "openrouter/free",
                 messages: [
                     { role: "system", content: "You are a helpful ecommerce assistant." },
                     { role: "user", content: req.body.message }

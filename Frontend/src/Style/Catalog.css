@@ -7,6 +7,7 @@
   min-height: 100vh;
   background: linear-gradient(to bottom, #f9fafb 0%, #ffffff 50%, #f9fafb 100%);
   padding: 2rem 0 4rem;
+  overflow-x: hidden;
 }
 
 /* Catalog Header */

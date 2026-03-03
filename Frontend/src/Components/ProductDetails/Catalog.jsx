@@ -1,17 +1,20 @@
 import React, { useState, useContext } from "react";
 import CartContext from "../Context/CartContext.jsx";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Search, Package } from "lucide-react";
+import { ShoppingBag, Heart,Star, TrendingUp,Search, Package } from "lucide-react";
 import "../../Style/Catalog.css";
 import { Link } from "react-router-dom";
+import axios from "axios";
 
-const CATEGORIES = ["All", "men", "women", "kids"];
+const CATEGORIES = ["All", "shirts", "pants", "accessories", "dresses"];
 
 export default function ClothingCatalog() {
   const { addToCart, mycategory, setCategory, catalogData, addVtoImage } = useContext(CartContext);
   const [showToast, setShowToast] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(mycategory || "All");
+  const {user} = useContext(CartContext);
+  const [showWishlistToast, setShowWishlistToast] = useState(false);
 
   const handleAddToCart = (product) => {
     addToCart({
@@ -40,10 +43,39 @@ export default function ClothingCatalog() {
     return matchesQuery && matchesCategory;
   });
 
+  const addToWishlist = async (item) => {
+      if (user && user.Email) {
+        try {
+          await axios.post("http://localhost:3000/wishlist/add", {
+            Email: user.Email,
+            product: {
+              _id: item._id,
+              name: item.name,
+              price: item.price,
+              imageUrl: item.imageUrl,
+            },
+          });
+          setShowWishlistToast(true);
+          setTimeout(() => {
+            setShowWishlistToast(false);
+          }, 2000);
+        } catch (error) {
+          if (error.response?.status === 409) {
+            alert("Item already in wishlist!");
+          } else {
+            console.error("Wishlist error:", error);
+            alert("Failed to add to wishlist");
+          }
+        }
+      } else {
+        alert("Please login to add items to wishlist");
+      }
+    };
+
 
   return (
     <div className="catalog-page">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -127,60 +159,100 @@ export default function ClothingCatalog() {
                   const discount = item.discountPercentage ? Math.round(item.discountPercentage) : null;
                   return (
                     <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                      className="catalog-product-card"
-                    >
-                      <div className="catalog-product-image-wrapper">
-                        <img
-                          src={item.imageUrl}
-                          alt={item.title || item.name}
-                          className="max-h-full object-contain"
-                        />
-                        <div className="catalog-product-overlay"></div>
-                        <Link to="/vto">
-                          <button
-                            onClick={() => { handleVtoImages(item) }}
-                            className={`catalog-product-wishlist animate-puls`}>
-                            <h2 className="font-bold">Try</h2>
-                          </button>
-                        </Link>
+                  key={item.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.03 }}
+                  className="group"
+                >
+                  <div className="product-card">
+                    <div className="product-card-image-container">
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="product-card-image"
+                      />
+                      <div className="product-card-badge animate-pulse">Vto</div>
+
+                      {/* Quick Actions */}
+                      <div className="product-card-quick-actions">
+                        <button
+                          className="product-card-quick-action-btn"
+                          aria-label="Quick view"
+                        >
+                          <TrendingUp className="w-4 h-4" />
+                        </button>
                       </div>
 
-                      <div className="catalog-product-content">
-                        <h2 className="catalog-product-title">
-                          {item.title || item.name}
-                        </h2>
-                        <p className="catalog-product-category">{item.category}</p>
-
-                        <div className="catalog-product-footer">
-                          <div className="catalog-product-price-container">
-                            <span className="catalog-product-price">
+                      {/* Hover Overlay */}
+                      <div className="product-card-overlay">
+                        <div className="product-card-overlay-content">
+                          <p className="product-card-overlay-title">
+                            {item.title}
+                          </p>
+                          <div className="product-card-rating">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className="w-3 h-3 fill-yellow-400 text-yellow-400"
+                              />
+                            ))}
+                            <span className="product-card-rating-text">
+                              (4.8)
+                            </span>
+                          </div>
+                          <div className="product-card-overlay-footer">
+                            <span className="product-card-overlay-price">
                               ${price}
                             </span>
-                            {discount && (
-                              <span className="catalog-product-discount">
-                                -{discount}%
-                              </span>
-                            )}
+                            <button
+                              className="product-card-overlay-button"
+                              aria-label="Add to cart"
+                            >
+                              <ShoppingBag className="w-4 h-4" />
+                            </button>
                           </div>
-                          <button
-                            className="catalog-product-add-button"
-                            onClick={() => handleAddToCart(item)}
-                            aria-label="Add to cart"
-                          >
-                            <ShoppingBag className="catalog-product-add-icon" />
-                            <span className="hidden sm:inline">Add</span>
-                          </button>
                         </div>
                       </div>
-                    </motion.div>
-                  );
-                })}
+                    </div>
+
+                    <div className="product-card-content">
+                      <p className="product-card-title">{item.name}</p>
+                      <div className="product-card-footer">
+                        <div className="product-card-price-container">
+                          <span className="product-card-price">Rs.{item.price}</span>
+                          <span className="product-card-price-original">
+                            Rs./{item.originalPrice}
+                          </span>
+                          {discount > 0 && (
+                            <span className="product-card-discount">
+                              -{discount}%
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          className="catalog-product-add-button"
+                          onClick={() => handleAddToCart(item)}
+                          aria-label="Add to cart"
+                        >
+                          <ShoppingBag className="catalog-product-add-icon" />
+                          <span className="hidden sm:inline">Add</span>
+                        </button>
+                        <button
+                          className="product-card-wishlist"
+                          aria-label="Add to wishlist"
+                          onClick={() => addToWishlist(item)}
+                        >
+                          <Heart className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>)})}
               </motion.div>
             )}
+
           </AnimatePresence>
 
           <AnimatePresence>
@@ -194,6 +266,20 @@ export default function ClothingCatalog() {
               >
                 <ShoppingBag className="catalog-toast-icon" />
                 <span className="catalog-toast-text">Added to cart!</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {showWishlistToast && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, y: 50 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: 50 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                className="catalog-toast"
+              >
+                <Heart className="catalog-toast-icon" />
+                <span className="catalog-toast-text">Added to Wishlist!</span>
               </motion.div>
             )}
           </AnimatePresence>
