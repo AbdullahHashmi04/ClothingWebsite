@@ -2,31 +2,39 @@ import express from "express";
 import axios from "axios";
 
 const router = express.Router();
-
 router.post("/", async (req, res) => {
     try {
+        console.log("Loading Gemini 2.5 Flash...");
 
         const response = await axios.post(
-            "https://openrouter.ai/api/v1/chat/completions",
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
             {
-                model: "openrouter/free",
-                messages: [
-                    { role: "system", content: "You are a helpful ecommerce assistant." },
-                    { role: "user", content: req.body.message }
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            { text: "You are a helpful ecommerce assistant." },
+                            { text: req.body.message }
+                        ]
+                    }
                 ]
             },
             {
                 headers: {
-                    "Authorization": `Bearer ${process.env.OPENAI_KEY}`,
+                    "x-goog-api-key": process.env.GOOGLE_API_KEY,
                     "Content-Type": "application/json"
                 }
             }
         );
-        res.json(response.data.choices[0].message.content);
+
+        const reply =
+            response.data.candidates[0].content.parts[0].text;
+
+        res.json(reply);
+
     } catch (err) {
-        console.error(err);
+        console.error("Gemini Error:", err.response?.data || err.message);
         res.status(500).send("Error");
     }
 });
-
 export default router;

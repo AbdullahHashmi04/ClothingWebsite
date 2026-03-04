@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useContext } from "react";
 import CartContext from "../../Context/CartContext";
-
 
 // ── Category config ───────────────────────────────────────────────────────────
 const categoryConfig = {
@@ -11,28 +10,27 @@ const categoryConfig = {
   "Wedding Wear": { gradient: "linear-gradient(135deg,#9333ea,#c084fc)", light: "#faf5ff", tag: "#9333ea" },
   "Formal": { gradient: "linear-gradient(135deg,#7e22ce,#9333ea)", light: "#faf5ff", tag: "#7e22ce" },
   "Casual": { gradient: "linear-gradient(135deg,#c026d3,#e879f9)", light: "#fdf4ff", tag: "#c026d3" },
+  "Fusion": { gradient: "linear-gradient(135deg,#f59e0b,#ef4444)", light: "#fff7ed", tag: "#f59e0b" },
+  "Western": { gradient: "linear-gradient(135deg,#3b82f6,#6366f1)", light: "#eff6ff", tag: "#3b82f6" },
 };
 
 const defaultConfig = { gradient: "linear-gradient(135deg,#9333ea,#c084fc)", light: "#fdf4ff", tag: "#9333ea" };
 
-// ── Unsplash fallback map ─────────────────────────────────────────────────────
-const imageMap = {
-  "ankara print kurta": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500&q=80",
-  "churidar suit": "https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=500&q=80",
-  "dhoti pants": "https://images.unsplash.com/photo-1583744946564-b52ac1c389c8?w=500&q=80",
-  "sharara lehenga": "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500&q=80",
-  "pathani suit": "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=500&q=80",
-  "a-line shalwar kameez": "https://images.unsplash.com/photo-1600107131986-61edc5dd8f36?w=500&q=80",
-  "maxi dress": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80",
-  "embroidered kurtas": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500&q=80",
-  "cigarette pants": "https://images.unsplash.com/photo-1594938298603-c8148c4b4c6e?w=500&q=80",
-  "lawn suit": "https://images.unsplash.com/photo-1571513800374-df1bbe650e56?w=500&q=80",
-  "a-line kurtas": "https://images.unsplash.com/photo-1583744946564-b52ac1c389c8?w=500&q=80",
-  "palazzo pants": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80",
-  "lace lehenga": "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500&q=80",
-  "thread embroidery kurta": "https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=500&q=80",
-  "high-low skirts": "https://images.unsplash.com/photo-1594938298603-c8148c4b4c6e?w=500&q=80",
-};
+// Curated fashion images used as client-side safety net
+const FALLBACK_POOL = [
+  "https://images.unsplash.com/photo-1585914641050-fa5b9da4b6e7?w=600&q=85",
+  "https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=600&q=85",
+  "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=600&q=85",
+  "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=85",
+  "https://images.unsplash.com/photo-1600107131986-61edc5dd8f36?w=600&q=85",
+  "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=600&q=85",
+  "https://images.unsplash.com/photo-1571513800374-df1bbe650e56?w=600&q=85",
+  "https://images.unsplash.com/photo-1613745515598-f930f3aef0a0?w=600&q=85",
+  "https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=600&q=85",
+  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=85",
+  "https://images.unsplash.com/photo-1589810635657-232948472d98?w=600&q=85",
+  "https://images.unsplash.com/photo-1610365000817-bb8f6281b9c7?w=600&q=85",
+];
 
 // ── Skeleton card ─────────────────────────────────────────────────────────────
 function SkeletonCard() {
@@ -67,20 +65,253 @@ function SkeletonCard() {
   );
 }
 
+// ── Detail Modal ──────────────────────────────────────────────────────────────
+function FashionModal({ item, index, onClose }) {
+  const cfg = categoryConfig[item.category] || defaultConfig;
+  const imgSrc = item.image_url || FALLBACK_POOL[index % FALLBACK_POOL.length];
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handler);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  return (
+    // Backdrop
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "rgba(15,5,30,0.72)",
+        backdropFilter: "blur(12px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "20px",
+        animation: "fadeIn 0.2s ease",
+      }}
+    >
+      {/* Modal card */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#fff",
+          borderRadius: "28px",
+          overflow: "hidden",
+          width: "100%",
+          maxWidth: "860px",
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "row",
+          boxShadow: "0 40px 120px rgba(147,51,234,0.25), 0 8px 32px rgba(0,0,0,0.18)",
+          animation: "scaleIn 0.28s cubic-bezier(0.34,1.4,0.64,1)",
+          overflowY: "auto",
+        }}
+      >
+        {/* Left – large image */}
+        <div style={{
+          flex: "0 0 45%",
+          position: "relative",
+          minHeight: "420px",
+          background: cfg.gradient,
+        }}>
+          <img
+            src={imgSrc}
+            alt={item.style}
+            style={{
+              width: "100%", height: "100%",
+              objectFit: "cover", display: "block",
+              position: "absolute", inset: 0,
+            }}
+          />
+          {/* Image overlay gradient */}
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 50%)",
+            pointerEvents: "none",
+          }} />
+          {/* Big TRENDING badge on image */}
+          <div style={{
+            position: "absolute", bottom: "20px", left: "20px",
+            background: cfg.gradient,
+            borderRadius: "100px",
+            padding: "7px 16px",
+            display: "flex", alignItems: "center", gap: "6px",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
+          }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="white" stroke="none">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+              <polyline points="16 7 22 7 22 13" />
+            </svg>
+            <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: "11px", fontWeight: 700, color: "#fff", letterSpacing: "0.06em" }}>TRENDING</span>
+          </div>
+        </div>
+
+        {/* Right – details */}
+        <div style={{
+          flex: 1,
+          padding: "36px 32px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "18px",
+          position: "relative",
+          overflowY: "auto",
+        }}>
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            style={{
+              position: "absolute", top: "18px", right: "18px",
+              width: "36px", height: "36px",
+              borderRadius: "50%",
+              border: "1.5px solid #e9d5ff",
+              background: "#faf5ff",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = cfg.gradient; e.currentTarget.style.borderColor = "transparent"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "#faf5ff"; e.currentTarget.style.borderColor = "#e9d5ff"; }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={cfg.tag} strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+
+          {/* Category pill */}
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: "6px",
+            background: `${cfg.tag}15`,
+            border: `1px solid ${cfg.tag}30`,
+            borderRadius: "100px",
+            padding: "5px 14px",
+            width: "fit-content",
+          }}>
+            <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: cfg.gradient, flexShrink: 0 }} />
+            <span style={{
+              fontFamily: "'DM Sans',sans-serif",
+              fontSize: "11px", fontWeight: 700,
+              color: cfg.tag, letterSpacing: "0.05em", textTransform: "uppercase",
+            }}>{item.category}</span>
+          </div>
+
+          {/* Style name */}
+          <h2 style={{
+            fontFamily: "'Playfair Display',Georgia,serif",
+            fontSize: "clamp(22px,3vw,30px)",
+            fontWeight: 900,
+            color: "#1a0a2e",
+            margin: 0, lineHeight: 1.25,
+            letterSpacing: "-0.01em",
+          }}>{item.style}</h2>
+
+          {/* Description */}
+          {item.description && (
+            <p style={{
+              fontFamily: "'DM Sans',sans-serif",
+              fontSize: "14.5px", color: "#4b5563",
+              margin: 0, lineHeight: 1.75,
+              borderLeft: `3px solid ${cfg.tag}`,
+              paddingLeft: "14px",
+            }}>{item.description}</p>
+          )}
+
+          {/* Info grid */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "12px",
+          }}>
+            {/* Popular in */}
+            <div style={{
+              background: `${cfg.tag}0d`,
+              borderRadius: "14px",
+              padding: "14px 16px",
+              border: `1px solid ${cfg.tag}20`,
+            }}>
+              <div style={{
+                fontFamily: "'DM Sans',sans-serif",
+                fontSize: "10px", fontWeight: 700,
+                color: cfg.tag, letterSpacing: "0.08em",
+                textTransform: "uppercase", marginBottom: "5px"
+              }}>📍 Popular In</div>
+              <div style={{
+                fontFamily: "'DM Sans',sans-serif",
+                fontSize: "13.5px", fontWeight: 600, color: "#1a0a2e",
+              }}>{item.popular_in || "—"}</div>
+            </div>
+
+            {/* Style keyword */}
+            <div style={{
+              background: `${cfg.tag}0d`,
+              borderRadius: "14px",
+              padding: "14px 16px",
+              border: `1px solid ${cfg.tag}20`,
+            }}>
+              <div style={{
+                fontFamily: "'DM Sans',sans-serif",
+                fontSize: "10px", fontWeight: 700,
+                color: cfg.tag, letterSpacing: "0.08em",
+                textTransform: "uppercase", marginBottom: "5px"
+              }}>✨ Style Type</div>
+              <div style={{
+                fontFamily: "'DM Sans',sans-serif",
+                fontSize: "13.5px", fontWeight: 600, color: "#1a0a2e",
+                textTransform: "capitalize",
+              }}>{item.image_keyword || item.category}</div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: "1px", background: "#f3e8ff" }} />
+
+          {/* Explore button */}
+          <button
+            onClick={onClose}
+            style={{
+              background: cfg.gradient,
+              color: "#fff",
+              border: "none",
+              borderRadius: "14px",
+              padding: "14px 28px",
+              fontFamily: "'DM Sans',sans-serif",
+              fontSize: "14px",
+              fontWeight: 700,
+              letterSpacing: "0.03em",
+              cursor: "pointer",
+              boxShadow: `0 8px 24px ${cfg.tag}40`,
+              transition: "transform 0.2s, box-shadow 0.2s",
+              marginTop: "auto",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = `0 14px 32px ${cfg.tag}55`; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = `0 8px 24px ${cfg.tag}40`; }}
+          >
+            Got it, close ✕
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Single card ───────────────────────────────────────────────────────────────
-function FashionCard({ item, index }) {
+function FashionCard({ item, index, onOpen }) {
   const [hovered, setHovered] = useState(false);
   const [imgError, setImgError] = useState(false);
   const cfg = categoryConfig[item.category] || defaultConfig;
-  const imageKeyword = item.image_keyword || item.image_keywords || item.style || "pakistani_fashion";
-  const cleanKeyword = encodeURIComponent(imageKeyword.trim().toLowerCase());
-  const mappedImage = imageMap[imageKeyword.toLowerCase()] || imageMap[item.style?.toLowerCase()];
-
-  const imgSrc = item.image_url || mappedImage ||
-    `https://loremflickr.com/500/600/fashion,pakistani,${cleanKeyword}?random=${index}`;
+  // Backend resolves image_url; client FALLBACK_POOL is a safety net
+  const imgSrc = imgError
+    ? FALLBACK_POOL[index % FALLBACK_POOL.length]
+    : (item.image_url || FALLBACK_POOL[index % FALLBACK_POOL.length]);
 
   return (
     <div
+      onClick={onOpen}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -185,6 +416,20 @@ function FashionCard({ item, index }) {
           {item.style}
         </h3>
 
+        {item.description && (
+          <p style={{
+            fontFamily: "'DM Sans',sans-serif",
+            fontSize: "12px", color: "#6b7280",
+            margin: 0, lineHeight: 1.6,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}>
+            {item.description}
+          </p>
+        )}
+
         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={cfg.tag} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
@@ -227,8 +472,16 @@ function FashionCard({ item, index }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function TrendingPage() {
   const { items } = useContext(CartContext);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const handleOpen = useCallback((item, index) => {
+    setSelectedItem(item);
+    setSelectedIndex(index);
+  }, []);
+
+  const handleClose = useCallback(() => setSelectedItem(null), []);
+
   return (
     <div style={{ minHeight: "100vh", background: "#fefcff", fontFamily: "'DM Sans',sans-serif" }}>
 
@@ -241,6 +494,14 @@ export default function TrendingPage() {
         @keyframes shimmer {
           0%   { background-position: 200% 0; }
           100% { background-position: -200% 0; }
+        }
+        @keyframes fadeIn {
+          from { opacity:0; }
+          to   { opacity:1; }
+        }
+        @keyframes scaleIn {
+          from { opacity:0; transform:scale(0.88); }
+          to   { opacity:1; transform:scale(1); }
         }
         * { box-sizing:border-box; }
         ::-webkit-scrollbar { width:6px; background:#fafafa; }
@@ -314,46 +575,46 @@ export default function TrendingPage() {
       </div>
 
       {/* ── Results count ── */}
-      {/* {!loading && !error && (
+      {items.length > 0 && (
         <p style={{
           textAlign: "center", marginTop: "24px", marginBottom: "4px",
           fontSize: "12px", color: "#c4b5d4", letterSpacing: "0.06em", textTransform: "uppercase",
         }}>
           {items.length} style{items.length !== 1 ? "s" : ""} found
         </p>
-      )} */}
+      )}
 
       {/* ── Grid ── */}
       <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "20px 24px 72px" }}>
 
-        {error && (
-          <div style={{
-            textAlign: "center", padding: "60px 24px",
-            background: "#fff5f7", border: "1px solid #fecdd3",
-            borderRadius: "16px", maxWidth: "480px", margin: "40px auto",
-          }}>
-            <div style={{ fontSize: "36px", marginBottom: "12px" }}>⚠️</div>
-            <p style={{ fontFamily: "'Playfair Display',serif", fontSize: "18px", color: "#9f1239", margin: "0 0 8px" }}>
-              API Error
-            </p>
-            <p style={{ fontSize: "13px", color: "#f43f5e", margin: 0 }}>{error}</p>
-          </div>
-        )}
-
-        {/* {loading && (
+        {items.length === 0 && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(270px,1fr))", gap: "22px" }}>
             {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
-        )} */}
+        )}
 
-        {/* {!loading && !error && ( */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(270px,1fr))", gap: "22px" }}>
-          {items.map((item, i) => (
-            <FashionCard key={item.style + i} item={item} index={i} />
-          ))}
-        </div>
-        {/* )} */}
+        {items.length > 0 && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(270px,1fr))", gap: "22px" }}>
+            {items.map((item, i) => (
+              <FashionCard
+                key={item.style + i}
+                item={item}
+                index={i}
+                onOpen={() => handleOpen(item, i)}
+              />
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* ── Detail Modal ── */}
+      {selectedItem && (
+        <FashionModal
+          item={selectedItem}
+          index={selectedIndex}
+          onClose={handleClose}
+        />
+      )}
     </div>
   );
 }
