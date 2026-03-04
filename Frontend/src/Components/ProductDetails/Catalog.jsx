@@ -32,7 +32,7 @@ export default function ClothingCatalog() {
     addVtoImage({
       ...product,
       name: product.title || product.name,
-      img: product.image || product.images?.[0] || product.thumbnail || `https://images.unsplash.com/photo-${1500000000000 + product.id}?w=400&h=500&fit=crop`,
+      img: product.imageUrl || product.image || product.images?.[0] || product.thumbnail,
       price: product.price || Math.floor(Math.random() * 200) + 20
     });
   };
@@ -173,7 +173,14 @@ export default function ClothingCatalog() {
                         alt={item.name}
                         className="product-card-image"
                       />
-                      <div className="product-card-badge animate-pulse">Vto</div>
+                      <div className="product-card-badge animate-pulse cursor-pointer">
+                       <Link to='/vto'>
+                        <button className=" cursor-pointer" onClick={()=>{handleVtoImages(item)}}>
+                        Vto
+                        </button>
+                       </Link>
+                        
+                        </div>
 
                       {/* Quick Actions */}
                       <div className="product-card-quick-actions">
@@ -204,7 +211,7 @@ export default function ClothingCatalog() {
                           </div>
                           <div className="product-card-overlay-footer">
                             <span className="product-card-overlay-price">
-                              ${price}
+                              Rs.{price}
                             </span>
                             <button
                               className="product-card-overlay-button"

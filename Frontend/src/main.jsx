@@ -30,6 +30,7 @@ import AuthCallback from './Components/AuthCallBack/AuthCallback.jsx';
 import Feedback from './Components/User/UserDashboard/Feedback.jsx';
 import AdminFeedback from './Components/Admin/Feedback.jsx';
 import AdminRoute from './Components/Admin/AdminRoute/AdminRoute.jsx';
+import AdminComplaints from './Components/Admin/Complaints.jsx';
 
 const router = createBrowserRouter([
   {
@@ -61,7 +62,8 @@ const router = createBrowserRouter([
       { path: "orders", element: <AdminOrders /> },
       { path: "customers", element: <AdminCustomers /> },
       { path: "discounts", element: <AdminDiscounts /> },
-      { path: "feedback", element: <AdminFeedback /> }
+      { path: "feedback", element: <AdminFeedback /> },
+      { path: "complaints", element: <AdminComplaints /> }
     ],
   }]},
   {

@@ -37,7 +37,9 @@ export default function UserWishlist() {
             </div>
             {item.stock
               ? <Btn variant="primary" small style={{ width: "100%", justifyContent: "center" }}>🛒 Add to Cart</Btn>
-              : <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, textAlign: "center", padding: "6px 0" }}>Out of Stock — Notify Me</div>
+              : <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, textAlign: "center", padding: "6px 0" }}>
+                
+                Out of Stock — Notify Me</div>
             }
           </div>
         ))}

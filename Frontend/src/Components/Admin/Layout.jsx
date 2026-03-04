@@ -8,6 +8,7 @@ const navItems = [
   { to: "/admin/customers", label: "Customers" },
   { to: "/admin/discounts", label: "Discounts" },
   { to: "/admin/feedback", label: "Feedback" },
+  { to: "/admin/complaints", label: "Complaints" },
 ];
 
 export default function AdminLayout() {

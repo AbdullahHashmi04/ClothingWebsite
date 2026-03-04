@@ -11,7 +11,11 @@ import {
   CreditCard,
   Plus,
   Minus,
-  ShieldCheck
+  ShieldCheck,
+  Tag,
+  X,
+  Loader2,
+  CheckCircle2
 } from "lucide-react";
 
 function Cart() {
@@ -19,6 +23,10 @@ function Cart() {
 
   const { cart, removeFromCart, loginStatus } = useContext(CartContext);
   const [quantities, setQuantities] = useState({});
+  const [promoCode, setPromoCode] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState(null);
 
   const Navigate = useNavigate();
 
@@ -27,9 +35,34 @@ function Cart() {
     return sum + item.price * qty;
   }, 0);
 
-  const discountRate = loginStatus ? 0.15 : 0;
-  const discountAmount = totalPrice * discountRate;
+  const discountAmount = appliedDiscount ? appliedDiscount.discountAmount : 0;
+  const freeShipping = appliedDiscount?.type === "Free Shipping";
   const finalPrice = totalPrice - discountAmount;
+
+  const applyPromoCode = async () => {
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    setPromoError("");
+    try {
+      const res = await axios.post("http://localhost:3000/discounts/applyDiscount", {
+        code: promoCode.trim(),
+        cartTotal: totalPrice,
+      });
+      setAppliedDiscount(res.data.discount);
+      setPromoError("");
+    } catch (err) {
+      setAppliedDiscount(null);
+      setPromoError(err.response?.data?.message || "Failed to apply promo code");
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const removePromoCode = () => {
+    setAppliedDiscount(null);
+    setPromoCode("");
+    setPromoError("");
+  };
 
   const updateQuantity = (id, change) => {
     setQuantities((prev) => {
@@ -189,14 +222,78 @@ function Cart() {
                   Order Summary
                 </h2>
 
+                {/* Promo Code Section */}
+                <div className="mb-6">
+                  {appliedDiscount ? (
+                    <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span className="text-sm font-semibold text-emerald-700">
+                          {appliedDiscount.code}
+                        </span>
+                        <span className="text-xs text-emerald-600">
+                          {appliedDiscount.type === "Percentage"
+                            ? `${appliedDiscount.value}% off`
+                            : appliedDiscount.type === "Fixed Amount"
+                            ? `$${appliedDiscount.value} off`
+                            : "Free Shipping"}
+                        </span>
+                      </div>
+                      <button
+                        onClick={removePromoCode}
+                        className="p-1 rounded-full hover:bg-emerald-100 text-emerald-600 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input
+                            type="text"
+                            placeholder="Promo code"
+                            value={promoCode}
+                            onChange={(e) => {
+                              setPromoCode(e.target.value.toUpperCase());
+                              setPromoError("");
+                            }}
+                            onKeyDown={(e) => e.key === "Enter" && applyPromoCode()}
+                            className="w-full pl-9 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                          />
+                        </div>
+                        <button
+                          onClick={applyPromoCode}
+                          disabled={promoLoading || !promoCode.trim()}
+                          className="px-5 py-3 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 active:scale-95"
+                        >
+                          {promoLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            "Apply"
+                          )}
+                        </button>
+                      </div>
+                      {promoError && (
+                        <p className="text-xs text-red-500 mt-2 font-medium">
+                          {promoError}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="space-y-4 mb-8 text-slate-600 font-medium">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
                     <span className="text-slate-900">${totalPrice.toFixed(2)}</span>
                   </div>
-                  {loginStatus && (
+                  {appliedDiscount && appliedDiscount.type !== "Free Shipping" && (
                     <div className="flex justify-between">
-                      <span className="text-emerald-600">Discount (15%)</span>
+                      <span className="text-emerald-600">
+                        Discount ({appliedDiscount.type === "Percentage" ? `${appliedDiscount.value}%` : `$${appliedDiscount.value}`})
+                      </span>
                       <span className="text-emerald-600 font-semibold">-${discountAmount.toFixed(2)}</span>
                     </div>
                   )}
@@ -206,6 +303,14 @@ function Cart() {
                       Free <ShieldCheck className="w-4 h-4" />
                     </span>
                   </div>
+                  {freeShipping && appliedDiscount && (
+                    <div className="flex justify-between">
+                      <span className="text-emerald-600">Free Shipping Applied</span>
+                      <span className="text-emerald-600 flex items-center gap-1">
+                        <CheckCircle2 className="w-4 h-4" />
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Tax estimate</span>
                     <span className="text-slate-900">$0.00</span>
@@ -215,7 +320,7 @@ function Cart() {
                     <div className="flex justify-between items-end">
                       <span className="text-lg font-bold text-slate-900">Order Total</span>
                       <div className="text-right">
-                        {loginStatus && (
+                        {appliedDiscount && discountAmount > 0 && (
                           <span className="text-sm text-slate-400 line-through block">
                             ${totalPrice.toFixed(2)}
                           </span>
@@ -255,9 +360,8 @@ function Cart() {
             </div>
            ) : (
             <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-center gap-4 text-slate-400">
-              {/* <CreditCard className="w-6 h-6" /> */}
              <Link to="/login" className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
-              <span className="text-xs font-semibold animate-pulse uppercase tracking-wider">Sign In to get 15% off</span>
+              <span className="text-xs font-semibold animate-pulse uppercase tracking-wider">Sign In for exclusive offers</span>
              </Link>
             </div>
            )}

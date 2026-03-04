@@ -269,7 +269,7 @@ const addToWishlist = async (item) => {
                           </div>
                           <div className="product-card-overlay-footer">
                             <span className="product-card-overlay-price">
-                              ${price}
+                              Rs.{price}
                             </span>
                             <button
                               className="product-card-overlay-button"
@@ -286,9 +286,9 @@ const addToWishlist = async (item) => {
                       <p className="product-card-title">{item.name}</p>
                       <div className="product-card-footer">
                         <div className="product-card-price-container">
-                          <span className="product-card-price">${item.price}</span>
+                          <span className="product-card-price">Rs.{item.price}</span>
                           <span className="product-card-price-original">
-                            ${item.originalPrice}
+                            Rs.{item.originalPrice}
                           </span>
                           {discount > 0 && (
                             <span className="product-card-discount">
