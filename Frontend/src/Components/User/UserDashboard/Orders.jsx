@@ -100,7 +100,7 @@ const UserOrder = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-100">
       {/* Hero Header */}
-      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 py-12 px-6">
+      <div className="var(--brand-gradient) py-12 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-3 mb-2">
             <FiPackage className="w-8 h-8 text-indigo-200" />

@@ -57,28 +57,52 @@ export default function Vto() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      // const NGROK_URL = "https://unnutritive-nonsyndicated-sheena.ngrok-free.dev"; // your Colab Ngrok URL
+      const response = await axios.post(
+        `http://localhost:8000/tryon`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          timeout: 300000,
+          responseType: 'blob',
+        }
+      );
 
-      // 3) POST FormData to backend (returns binary PNG image)
-     const response = await axios.post(
-  `http://localhost:3000/viton`,
-  formData,
-  { headers, timeout: 300000, responseType: 'blob' } // keeps it as binary image
-);
+      console.log("Try-on API response received", response.data);
 
-      console.log("Try-on API response received",response.data);
-
-      // 4) Convert the binary image response to a displayable URL
-      const imageBlob = new Blob([response.data], { type: 'image/png' });
+      // 4) Convert the binary image FileResponse to a displayable URL
+      //    FastAPI returns result.jpg, so use image/jpeg
+      const imageBlob = new Blob([response.data], { type: response.headers['content-type'] || 'image/jpeg' });
       const imageUrl = URL.createObjectURL(imageBlob);
       setResult(imageUrl);
     } catch (err) {
       console.error('Try-on error:', err);
-      setError(
-        err.response?.data?.message ||
-        err.message ||
-        'Virtual try-on failed. Please try again.'
-      );
+      let errorMsg = 'Virtual try-on failed. Please try again.';
+
+      if (err.response?.data instanceof Blob) {
+        // Since we asked for a Blob, even 500 JSON errors come back as Blobs.
+        // We need to read the Blob as text to see the real error.
+        try {
+          const text = await err.response.data.text();
+          const json = JSON.parse(text);
+          console.error("Backend Error Detail:", json);
+
+          if (json.detail?.error) {
+            errorMsg = json.detail.error;
+            // You can also log or show json.detail.stderr here if you want to see the exact Python crash
+            console.error("Subprocess stderr:", json.detail.stderr);
+          } else if (json.detail) {
+            errorMsg = typeof json.detail === 'string' ? json.detail : JSON.stringify(json.detail);
+          }
+        } catch (e) {
+          console.error("Could not parse error blob", e);
+        }
+      } else {
+        errorMsg = err.response?.data?.message || err.message || errorMsg;
+      }
+
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -86,7 +110,7 @@ export default function Vto() {
 
   useEffect(() => {
     if (ImageVto && ImageVto.length > 0) {
-      console.log('Cloth image URL:', ImageVto[0].imageUrl);
+      console.log('Cloth image URL:', ImageVto[0].img || ImageVto[0].imageUrl || ImageVto[0].image);
     }
   }, [ImageVto]);
 

@@ -31,7 +31,8 @@ import Feedback from './Components/User/UserDashboard/Feedback.jsx';
 import AdminFeedback from './Components/Admin/Feedback.jsx';
 import AdminRoute from './Components/Admin/AdminRoute/AdminRoute.jsx';
 import AdminComplaints from './Components/Admin/Complaints.jsx';
-
+import GlassesTryOn from './Components/Ai/GlassesTryOn/GlassesTryOn.jsx';
+import WearCast from './Components/Ai/Recommendation/Wearcast.jsx';
 const router = createBrowserRouter([
   {
     path: "/",
@@ -48,6 +49,8 @@ const router = createBrowserRouter([
       { path: "trending", element: <Trending /> },
       { path: "auth/callback", element: <AuthCallback /> },
       { path: "feedback", element: <Feedback /> },
+      { path: "glasses", element: <GlassesTryOn /> },
+      { path: "wearcast", element: <WearCast /> }
     ],
   },
   {

@@ -22,6 +22,8 @@ import Feedback from "../Routes/Feedback.js"
 import ComplaintRoute from "../Routes/Complaint.js"
 import WishlistRoute from "../Routes/WishlistRoute.js"
 import Viton from "../ExternalApi/Viton.js";
+import aiRoutes from "../Routes/ai-routes.js"
+import recommendationRoute from "../Routes/Ai/Recommendation.js"
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -65,6 +67,10 @@ app.use('/discounts', AdminDiscounts)
 
 app.use('/wishlist', WishlistRoute)
 
+
+app.use("/api/ai", aiRoutes);
+
+app.use('/api/weather', recommendationRoute)
 
 //Ai
 app.use("/chat", Chatbot)

@@ -12,6 +12,8 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@aws-sdk/client-bedrock": "^3.1010.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.1011.0",
     "@google/genai": "^1.43.0",
     "@google/generative-ai": "^0.24.1",
     "@gradio/client": "^2.1.0",

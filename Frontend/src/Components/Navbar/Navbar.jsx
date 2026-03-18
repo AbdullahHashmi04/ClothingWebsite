@@ -207,8 +207,10 @@ export default function Navbar() {
   const navLinks = [
     { path: "/", label: "Home" },
     { path: "/catalog", label: "Catalog" },
-    { path: "/about", label: "About" },
+    // { path: "/about", label: "About" },
     { path: "/trending", label: "Trending" },
+    { path: "/glasses", label: "Glasses" },
+    { path: "/wearcast", label: "WearCast" }
   ];
 
   const isActive = (path) => {
@@ -295,7 +297,7 @@ export default function Navbar() {
                   transition-all duration-200 transform hover:scale-105 shadow-lg disabled:opacity-50 
                   disabled:cursor-not-allowed "
                   >
-                    Login
+                    Sign in
 
                   </button>
                 </Link>
