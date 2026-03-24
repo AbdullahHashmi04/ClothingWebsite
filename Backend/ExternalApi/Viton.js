@@ -1,14 +1,29 @@
 import express from "express";
-import cors from "cors";
 import multer from "multer";
-import { Client } from "@gradio/client"; // npm install @gradio/client
+import Replicate from "replicate";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, "../.env") });
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Convert a multer file buffer to a Blob
-function bufferToBlob(file) {
-  return new Blob([file.buffer], { type: file.mimetype });
+// Initialize Replicate client using env token
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN,
+});
+
+/**
+ * Convert a multer file buffer to a base64 data URI
+ * Replicate accepts data URIs for image inputs
+ */
+function bufferToDataURI(file) {
+  const base64 = file.buffer.toString("base64");
+  return `data:${file.mimetype};base64,${base64}`;
 }
 
 router.post(
@@ -20,6 +35,7 @@ router.post(
   async (req, res) => {
     try {
       const garment_des = req.body?.garment_des || "clothing item";
+      const category = req.body?.category || "upper_body"; // upper_body, lower_body, dresses
 
       const personFile = req.files?.person?.[0];
       const clothFile = req.files?.cloth?.[0];
@@ -31,48 +47,87 @@ router.post(
         });
       }
 
-      const humanBlob = bufferToBlob(personFile);
-      const garmBlob = bufferToBlob(clothFile);
+      // Convert buffers to data URIs for Replicate
+      const humanImgURI = bufferToDataURI(personFile);
+      const garmImgURI = bufferToDataURI(clothFile);
 
-      console.log("Connecting to Hugging Face...");
-      const client = await Client.connect("yisol/IDM-VTON");
+      console.log("🔄 Sending images to Replicate IDM-VTON...");
+      console.log(`   Person image size: ${personFile.size} bytes`);
+      console.log(`   Cloth image size:  ${clothFile.size} bytes`);
+      console.log(`   Category: ${category}`);
 
-      console.log("Sending to model (this may take time)...");
+      // Run the IDM-VTON model on Replicate
+      const output = await replicate.run("cuuupid/idm-vton:0513734a452173b8173e907e3a59d19a36266e55b48528559432bd21c7d7e985", {
+        input: {
+          human_img: humanImgURI,
+          garm_img: garmImgURI,
+          garment_des: garment_des,
+          category: category,
+          crop: false,
+          seed: 42,
+          steps: 30,
+          force_dc: false,
+          mask_only: false,
+        },
+      });
 
-      const result = await client.predict("/tryon", [
-        { "background": humanBlob, "layers": [], "composite": null },
-        garmBlob,
-        garment_des,
-        true,           // is_checked (auto-mask)
-        false,          // is_checked_crop
-        30,             // denoise_steps
-        42              // seed
-      ]);
+      console.log("✅ Replicate IDM-VTON response received");
 
-      const outputImage = result.data[0];
+      // The output is typically a URL string to the result image
+      // It could also be a ReadableStream or other format
+      let resultUrl;
+
+      if (typeof output === "string") {
+        resultUrl = output;
+      } else if (output?.url) {
+        resultUrl = output.url();
+      } else if (Array.isArray(output) && output.length > 0) {
+        resultUrl = typeof output[0] === "string" ? output[0] : output[0]?.url?.() || output[0];
+      } else {
+        // If it's a ReadableStream, read it
+        const chunks = [];
+        for await (const chunk of output) {
+          chunks.push(chunk);
+        }
+        const buffer = Buffer.concat(chunks.map(c => typeof c === 'string' ? Buffer.from(c) : c));
+        const base64Result = buffer.toString("base64");
+        resultUrl = `data:image/png;base64,${base64Result}`;
+      }
+
+      console.log("✅ Result URL obtained:", typeof resultUrl === 'string' ? resultUrl.substring(0, 80) + '...' : 'data URI');
 
       res.json({
         success: true,
-        result_url: outputImage.url,
+        result_url: resultUrl,
       });
-
     } catch (error) {
-      console.error("Viton error:", error);
+      console.error("❌ IDM-VTON Replicate error:", error);
 
       const status = error.response?.status || error.status;
       const msg = error.message || "";
 
-      if (status === 402) {
+      if (status === 402 || msg.includes("payment") || msg.includes("billing")) {
         return res.status(402).json({
           success: false,
-          message: "Virtual try-on service has insufficient credit. Please contact the admin.",
+          message:
+            "Replicate API has insufficient credit. Please add billing to your Replicate account.",
         });
       }
 
-      if (msg.toLowerCase().includes("no gpu") || msg.toLowerCase().includes("gpu")) {
-        return res.status(503).json({
+      if (status === 401 || msg.includes("Unauthenticated")) {
+        return res.status(401).json({
           success: false,
-          message: "The AI model is currently busy (no GPU available). Please try again in a few minutes.",
+          message:
+            "Invalid Replicate API token. Please check your REPLICATE_API_TOKEN in the .env file.",
+        });
+      }
+
+      if (status === 422) {
+        return res.status(422).json({
+          success: false,
+          message:
+            "Invalid input images. Please ensure both images are valid and try again.",
+          detail: msg,
         });
       }
 

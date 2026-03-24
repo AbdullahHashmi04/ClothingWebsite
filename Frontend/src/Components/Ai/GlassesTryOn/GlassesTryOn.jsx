@@ -12,14 +12,41 @@ const VIDEO_W = 640;
 const VIDEO_H = 480;
 
 // ── Key MediaPipe FaceMesh landmark indices ──────────────────────────────────
-// All available with refineLandmarks: false
+// These landmarks give us precise eye, temple, and nose positions
 const LM = {
-  LEFT_EYE_OUTER:  33,   // leftmost point of left eye
-  RIGHT_EYE_OUTER: 263,  // rightmost point of right eye
-  NOSE_BRIDGE:     168,  // top of nose bridge — where nose pads sit
-  LEFT_EAR:        234,  // left temple / ear attachment point
-  RIGHT_EAR:       454,  // right temple / ear attachment point
+  // Eye corners (outer and inner)
+  LEFT_EYE_OUTER:   33,   // leftmost point of left eye
+  LEFT_EYE_INNER:  133,   // rightmost point of left eye (inner corner)
+  RIGHT_EYE_INNER: 362,   // leftmost point of right eye (inner corner)
+  RIGHT_EYE_OUTER: 263,   // rightmost point of right eye
+
+  // Eye center landmarks (upper/lower lid midpoints)
+  LEFT_EYE_TOP:     159,  // top of left eye
+  LEFT_EYE_BOTTOM:  145,  // bottom of left eye
+  RIGHT_EYE_TOP:    386,  // top of right eye
+  RIGHT_EYE_BOTTOM: 374,  // bottom of right eye
+
+  // Nose bridge - where glasses rest
+  NOSE_BRIDGE_TOP:   6,   // top of nose bridge between eyes
+  NOSE_BRIDGE:     168,   // mid nose bridge
+
+  // Temple / side of head (ear area)
+  LEFT_TEMPLE:     234,   // left side of face ~ ear
+  RIGHT_TEMPLE:    454,   // right side of face ~ ear
+
+  // Forehead & chin for head tilt estimation
+  FOREHEAD:         10,   // top of forehead center
+  CHIN:            152,   // bottom of chin center
+
+  // Cheekbone for depth estimation
+  LEFT_CHEEK:      234,
+  RIGHT_CHEEK:     454,
 };
+
+// Exponential smoothing helper
+function lerp(current, target, factor) {
+  return current * factor + target * (1 - factor);
+}
 
 function GlassesTryOn() {
   // ── Refs ─────────────────────────────────────────────────────────────────────
@@ -41,7 +68,17 @@ function GlassesTryOn() {
   const glassesRef     = useRef(null);  // Three.js glasses group
 
   // Smoothed 2D face data
-  const faceDataRef = useRef({ cx: 0, cy: 0, gW: 0, gH: 0, angle: 0, found: false });
+  const faceDataRef = useRef({
+    cx: 0, cy: 0, gW: 0, gH: 0, angle: 0, found: false
+  });
+
+  // Smoothed 3D face data
+  const face3DRef = useRef({
+    x: 0, y: 0, z: 0,
+    rotX: 0, rotY: 0, rotZ: 0,
+    scale: 1,
+    found: false
+  });
 
   // ── State ────────────────────────────────────────────────────────────────────
   const [mode,             setMode]             = useState("2d");
@@ -49,12 +86,12 @@ function GlassesTryOn() {
   const [ready,            setReady]            = useState(false);
   const [debugInfo,        setDebugInfo]        = useState("");
   // 2D tuning
-  const [scaleMultiplier,  setScaleMultiplier]  = useState(1.0);   // multiplier on temple-to-temple distance
-  const [verticalOffset,   setVerticalOffset]   = useState(0);     // px offset from nose bridge
+  const [scaleMultiplier,  setScaleMultiplier]  = useState(1.15);  // slightly wider for realistic fit
+  const [verticalOffset,   setVerticalOffset]   = useState(0);
   const [horizontalOffset, setHorizontalOffset] = useState(0);
-  const [smoothing,        setSmoothing]        = useState(0.82);
+  const [smoothing,        setSmoothing]        = useState(0.7);
   // 3D tuning
-  const [nativeWidth,      setNativeWidth]      = useState(1.0);   // auto-detected from bounding box
+  const [nativeWidth,      setNativeWidth]      = useState(1.0);
   const [loading3D,        setLoading3D]        = useState(false);
   const [error3D,          setError3D]          = useState("");
 
@@ -124,6 +161,87 @@ function GlassesTryOn() {
     };
   }, []);
 
+  // ── Helper: extract face geometry from landmarks ───────────────────────────
+  function extractFaceGeometry(kp) {
+    const Lo = kp[LM.LEFT_EYE_OUTER];
+    const Li = kp[LM.LEFT_EYE_INNER];
+    const Ri = kp[LM.RIGHT_EYE_INNER];
+    const Ro = kp[LM.RIGHT_EYE_OUTER];
+    const LT = kp[LM.LEFT_EYE_TOP];
+    const LB = kp[LM.LEFT_EYE_BOTTOM];
+    const RT = kp[LM.RIGHT_EYE_TOP];
+    const RB = kp[LM.RIGHT_EYE_BOTTOM];
+    const NB = kp[LM.NOSE_BRIDGE_TOP];
+    const LE = kp[LM.LEFT_TEMPLE];
+    const RE = kp[LM.RIGHT_TEMPLE];
+    const FH = kp[LM.FOREHEAD];
+    const CH = kp[LM.CHIN];
+
+    if (!Lo || !Ro || !NB) return null;
+
+    // Center of left eye and right eye
+    const leftEyeCenter  = [(Lo[0] + (Li || Lo)[0]) / 2, ((LT || Lo)[1] + (LB || Lo)[1]) / 2];
+    const rightEyeCenter = [(Ro[0] + (Ri || Ro)[0]) / 2, ((RT || Ro)[1] + (RB || Ro)[1]) / 2];
+
+    // Eye midpoint — this is where the glasses bridge sits
+    const eyeMidX = (leftEyeCenter[0] + rightEyeCenter[0]) / 2;
+    const eyeMidY = (leftEyeCenter[1] + rightEyeCenter[1]) / 2;
+
+    // Use nose bridge Y but blend with eye midpoint for better vertical positioning
+    // Glasses sit slightly above the eye center, at the nose bridge level
+    const bridgeY = NB[1] * 0.4 + eyeMidY * 0.6;
+
+    // Temple-to-temple distance for width
+    const templeWidth = Math.hypot(
+      (RE || Ro)[0] - (LE || Lo)[0],
+      (RE || Ro)[1] - (LE || Lo)[1]
+    );
+
+    // Eye-to-eye distance for more stable width reference
+    const eyeWidth = Math.hypot(Lo[0] - Ro[0], Lo[1] - Ro[1]);
+
+    // Roll angle from eye line
+    const dx = Ro[0] - Lo[0];
+    const dy = Ro[1] - Lo[1];
+    const rollAngle = Math.atan2(dy, dx);
+
+    // Head tilt (pitch) from forehead-chin if available
+    let pitchAngle = 0;
+    if (FH && CH) {
+      const faceHeight = Math.hypot(FH[0] - CH[0], FH[1] - CH[1]);
+      // Ratio of nose bridge position relative to face height indicates pitch
+      const noseRatio = (NB[1] - FH[1]) / (CH[1] - FH[1]);
+      // When looking down, nose ratio > 0.3; looking up, < 0.3
+      pitchAngle = (noseRatio - 0.35) * 1.2; // approximate radians
+    }
+
+    // Head yaw from asymmetry of temple distances
+    let yawAngle = 0;
+    if (LE && RE && Lo && Ro) {
+      const leftDist  = Math.abs(Lo[0] - LE[0]);
+      const rightDist = Math.abs(Ro[0] - RE[0]);
+      const totalDist = leftDist + rightDist;
+      if (totalDist > 0) {
+        yawAngle = ((rightDist - leftDist) / totalDist) * 1.5; // radians estimate
+      }
+    }
+
+    // Z depth from eye keypoints (if available)
+    const hasZ = Lo.length > 2 && Lo[2] !== undefined && Lo[2] !== 0;
+    const avgZ = hasZ ? (Lo[2] + Ro[2]) / 2 : 0;
+
+    return {
+      centerX: eyeMidX,
+      centerY: bridgeY,
+      templeWidth,
+      eyeWidth,
+      rollAngle,
+      pitchAngle,
+      yawAngle,
+      depth: avgZ,
+    };
+  }
+
   // ── 3D init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (mode !== "3d" || !ready) { isRunning3D.current = false; return; }
@@ -176,16 +294,25 @@ function GlassesTryOn() {
 
         const glasses = gltf.scene;
         glasses.visible = true;
-        scene.add(glasses);
-        glassesRef.current = glasses;
 
-        // Auto-detect bounding box width so scale is correct without manual tweaking
+        // Center the model at its own origin
         const box = new THREE.Box3().setFromObject(glasses);
+        const center = box.getCenter(new THREE.Vector3());
+        glasses.position.sub(center); // center the geometry
+
+        // Wrap in a group so transforms apply cleanly
+        const glassesGroup = new THREE.Group();
+        glassesGroup.add(glasses);
+        scene.add(glassesGroup);
+        glassesRef.current = glassesGroup;
+
+        // Auto-detect bounding box width
         const detectedW = box.max.x - box.min.x;
         const autoNativeW = detectedW > 0 ? parseFloat(detectedW.toFixed(4)) : 1.0;
         setNativeWidth(autoNativeW);
 
         isRunning3D.current = true;
+        face3DRef.current = { x: 0, y: 0, z: 0, rotX: 0, rotY: 0, rotZ: 0, scale: 1, found: false };
         start3DLoop(FOV, autoNativeW);
         setLoading3D(false);
       } catch (err) {
@@ -216,7 +343,6 @@ function GlassesTryOn() {
   }, [mode, ready]);
 
   // ── 3D detection loop ────────────────────────────────────────────────────────
-  // nativeWidth passed as arg so the closure always has the auto-detected value
   const start3DLoop = (FOV, autoNativeW) => {
     const video     = videoRef.current;
     const offscreen = offscreenRef.current;
@@ -226,9 +352,7 @@ function GlassesTryOn() {
     const halfH = Math.tan((FOV / 2) * Math.PI / 180);
     const halfW = halfH * (cameraRef.current.aspect);
 
-    // Smoothing state
-    let sX = 0, sY = 0, sAngle = 0, sScale = 0, first = true;
-    const SM = 0.82;
+    const SM = 0.65; // smoothing factor (lower = more responsive)
     let frameCount = 0;
 
     const loop = async () => {
@@ -245,61 +369,69 @@ function GlassesTryOn() {
               ? preds[0].keypoints.map(k => [k.x, k.y, k.z ?? 0])
               : preds[0].scaledMesh;
 
-            const Lo = kp[LM.LEFT_EYE_OUTER];
-            const Ro = kp[LM.RIGHT_EYE_OUTER];
-            const NB = kp[LM.NOSE_BRIDGE];
-            const LE = kp[LM.LEFT_EAR]  || Lo;
-            const RE = kp[LM.RIGHT_EAR] || Ro;
-
-            if (Lo && Ro && NB) {
+            const geo = extractFaceGeometry(kp);
+            if (geo) {
               // ── X/Y in world space ─────────────────────────────────────────
-              // Midpoint of eye outer corners for X, nose bridge for Y
               // Mirror X because the display video is flipped
-              const pixelX = (Lo[0] + Ro[0]) / 2;
-              const pixelY = NB[1];
-              const ndcX   =  (pixelX / VIDEO_W) * 2 - 1;
-              const ndcY   = -((pixelY / VIDEO_H) * 2 - 1);
+              const ndcX =  (geo.centerX / VIDEO_W) * 2 - 1;
+              const ndcY = -((geo.centerY / VIDEO_H) * 2 - 1);
               const worldX = -ndcX * halfW;   // negate = mirror
               const worldY =  ndcY * halfH;
 
               // ── Scale: temple-to-temple → world units ──────────────────────
-              const templePx   = Math.hypot(RE[0] - LE[0], RE[1] - LE[1]);
-              const templeWorld = (templePx / VIDEO_W) * (halfW * 2);
-              // Use auto-detected native width; user can override via slider
+              const templeWorld = (geo.templeWidth / VIDEO_W) * (halfW * 2);
               const nW = nativeWidth > 0 ? nativeWidth : autoNativeW;
-              const targetScale = templeWorld / nW;
+              const targetScale = (templeWorld / nW) * 1.05; // slightly larger for ear coverage
 
               // ── Rotation ───────────────────────────────────────────────────
-              const dx = Ro[0] - Lo[0];
-              const dy = Ro[1] - Lo[1];
-              const rawAngle = Math.atan2(dy, dx);
+              const rollZ  = -geo.rollAngle; // negate for mirrored view
+              const pitchX = -geo.pitchAngle * 0.6; // dampen pitch
+              const yawY   = geo.yawAngle * 0.5;    // dampen yaw
 
               // ── Smooth ─────────────────────────────────────────────────────
-              if (first) {
-                sX = worldX; sY = worldY; sAngle = rawAngle; sScale = targetScale;
-                first = false;
+              const fd = face3DRef.current;
+              if (!fd.found) {
+                face3DRef.current = {
+                  x: worldX, y: worldY, z: 0,
+                  rotX: pitchX, rotY: yawY, rotZ: rollZ,
+                  scale: targetScale, found: true
+                };
               } else {
-                sX     = sX     * SM + worldX      * (1 - SM);
-                sY     = sY     * SM + worldY      * (1 - SM);
-                sAngle = sAngle * SM + rawAngle    * (1 - SM);
-                sScale = sScale * SM + targetScale * (1 - SM);
+                face3DRef.current = {
+                  x:     lerp(fd.x, worldX, SM),
+                  y:     lerp(fd.y, worldY, SM),
+                  z:     0,
+                  rotX:  lerp(fd.rotX, pitchX, SM),
+                  rotY:  lerp(fd.rotY, yawY, SM),
+                  rotZ:  lerp(fd.rotZ, rollZ, SM),
+                  scale: lerp(fd.scale, targetScale, SM),
+                  found: true,
+                };
               }
 
+              const s = face3DRef.current;
               const g = glassesRef.current;
-              g.position.set(sX, sY, 0);
-              g.rotation.z = sAngle;
-              g.scale.setScalar(Math.max(sScale, 0.0001));
+
+              // Apply transforms in correct order: position, then rotation (ZYX)
+              g.position.set(s.x, s.y, s.z);
+              g.rotation.set(0, 0, 0); // reset
+              g.rotateZ(s.rotZ);
+              g.rotateY(s.rotY);
+              g.rotateX(s.rotX);
+              g.scale.setScalar(Math.max(s.scale, 0.0001));
 
               if (frameCount % 30 === 0) {
                 setDebugInfo(
                   `✅ 3D | faces: ${preds.length}\n` +
-                  `Temple: ${Math.round(templePx)}px → ${templeWorld.toFixed(3)} world\n` +
-                  `nativeW: ${nW.toFixed(4)} | scale: ${sScale.toFixed(4)}\n` +
-                  `pos: (${sX.toFixed(3)}, ${sY.toFixed(3)}) | rot: ${(sAngle*180/Math.PI).toFixed(1)}°`
+                  `Temple: ${Math.round(geo.templeWidth)}px → ${templeWorld.toFixed(3)} world\n` +
+                  `nativeW: ${nW.toFixed(4)} | scale: ${s.scale.toFixed(4)}\n` +
+                  `pos: (${s.x.toFixed(3)}, ${s.y.toFixed(3)}) | roll: ${(s.rotZ*180/Math.PI).toFixed(1)}°\n` +
+                  `pitch: ${(s.rotX*180/Math.PI).toFixed(1)}° | yaw: ${(s.rotY*180/Math.PI).toFixed(1)}°`
                 );
               }
             }
           } else if (frameCount % 90 === 0) {
+            face3DRef.current.found = false;
             setDebugInfo("⚠️  No face — move closer");
           }
         } catch (e) { console.warn("3D loop err:", e.message); }
@@ -341,30 +473,35 @@ function GlassesTryOn() {
               ? preds[0].keypoints.map(k => [k.x, k.y])
               : preds[0].scaledMesh;
 
-            const Lo = kp[LM.LEFT_EYE_OUTER];
-            const Ro = kp[LM.RIGHT_EYE_OUTER];
-            const NB = kp[LM.NOSE_BRIDGE];
-            const LE = kp[LM.LEFT_EAR]  || Lo;
-            const RE = kp[LM.RIGHT_EAR] || Ro;
+            const geo = extractFaceGeometry(kp);
 
-            if (Lo && Ro && NB) {
-              // Angle from outer eye corners
-              const dx = Ro[0] - Lo[0];
-              const dy = Ro[1] - Lo[1];
-              const rawAngle = Math.atan2(dy, dx);
-
+            if (geo) {
               // Width = temple-to-temple × scale slider
-              const rawGW = Math.hypot(RE[0] - LE[0], RE[1] - LE[1]) * scaleMultiplier;
-              // Aspect ratio ~2.8:1 is typical for glasses frames
-              const rawGH = rawGW / 2.8;
+              // The temple width gives us the full glasses frame width including arms
+              const rawGW = geo.templeWidth * scaleMultiplier;
 
-              // Position: midpoint of eyes horizontally, nose bridge vertically
-              const rawCx = (Lo[0] + Ro[0]) / 2 + horizontalOffset;
-              const rawCy = NB[1] + verticalOffset;
+              // Use the actual glasses image aspect ratio for accurate height
+              const glassesAspect = imgRef.current
+                ? imgRef.current.naturalWidth / imgRef.current.naturalHeight
+                : 2.5;
+              const rawGH = rawGW / glassesAspect;
+
+              // Position: center of eyes horizontally, nose bridge level vertically
+              const rawCx = geo.centerX + horizontalOffset;
+              const rawCy = geo.centerY + verticalOffset;
+
+              const rawAngle = geo.rollAngle;
 
               const fd = faceDataRef.current;
               faceDataRef.current = fd.found
-                ? { cx: sm(rawCx, fd.cx), cy: sm(rawCy, fd.cy), gW: sm(rawGW, fd.gW), gH: sm(rawGH, fd.gH), angle: sm(rawAngle, fd.angle), found: true }
+                ? {
+                    cx: sm(rawCx, fd.cx),
+                    cy: sm(rawCy, fd.cy),
+                    gW: sm(rawGW, fd.gW),
+                    gH: sm(rawGH, fd.gH),
+                    angle: sm(rawAngle, fd.angle),
+                    found: true,
+                  }
                 : { cx: rawCx, cy: rawCy, gW: rawGW, gH: rawGH, angle: rawAngle, found: true };
 
               if (frameCount - lastDebug >= 30) {
@@ -372,7 +509,8 @@ function GlassesTryOn() {
                 const f = faceDataRef.current;
                 setDebugInfo(
                   `✅ 2D | glasses: ${Math.round(f.gW)}×${Math.round(f.gH)}px\n` +
-                  `center: (${Math.round(f.cx)}, ${Math.round(f.cy)}) | angle: ${(f.angle*180/Math.PI).toFixed(1)}°`
+                  `center: (${Math.round(f.cx)}, ${Math.round(f.cy)}) | angle: ${(f.angle*180/Math.PI).toFixed(1)}°\n` +
+                  `temple: ${Math.round(geo.templeWidth)}px | eye: ${Math.round(geo.eyeWidth)}px`
                 );
               }
             }
@@ -489,8 +627,8 @@ function GlassesTryOn() {
             onChange={setSmoothing}
             display={`${(smoothing * 100).toFixed(0)}%`} />
           <p style={{ margin: 0, fontSize: "0.78rem", color: "#888" }}>
-            Width scales from temple-to-temple landmark distance (realistic ear-to-ear fit).
-            Vertical offset moves glasses up/down from nose bridge.
+            Glasses are sized to match your temple-to-temple width and positioned at eye level.
+            Use sliders for fine-tuning.
           </p>
         </div>
       )}
@@ -584,12 +722,12 @@ function GlassesTryOn() {
 
       {ready && mode === "2d" && (
         <p style={{ color: "#555", fontSize: "0.85rem", textAlign: "center" }}>
-          📷 Glasses span your temples — adjust <em>Width scale</em> and <em>Vertical</em> to fine-tune
+          📷 Glasses snap to your eyes & temples — adjust <em>Width scale</em> and <em>Vertical</em> to fine-tune
         </p>
       )}
       {ready && mode === "3d" && !loading3D && !error3D && (
         <p style={{ color: "#555", fontSize: "0.85rem", textAlign: "center" }}>
-          🎮 Scale is set automatically from your temple width
+          🎮 3D glasses follow your head rotation like Snapchat filters
         </p>
       )}
 
