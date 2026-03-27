@@ -89,6 +89,7 @@ export default function Vto() {
       const clothImageUrl = ImageVto[0].img;
       const clothResponse = await fetch(clothImageUrl);
       const clothBlob = await clothResponse.blob();
+
       const clothFile = new File([clothBlob], "cloth.jpg", {
         type: clothBlob.type || "image/jpeg",
       });

@@ -4,7 +4,7 @@ import {
   TrendingUp, Heart, Star, Award, Truck, Shield,
   RefreshCw, Users, CheckCircle, ArrowRight, Zap, Gift,
 } from "lucide-react";
-import { motion ,AnimatePresence} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import CartContext from "../Context/CartContext";
 import { Link } from "react-router-dom";
 import "../../Style/FeaturedProducts.css";
@@ -19,6 +19,7 @@ const slides = [
   {
     type: "image",
     img: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80",
+
     title: "Elevate Your Style",
     subtitle: "Discover premium fashion that defines you",
     gradient: "from-black/70 via-purple-900/60 to-black/70",
@@ -32,7 +33,7 @@ const slides = [
   },
   {
     type: "image",
-    img: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1920&q=80",
+    img: "https://plus.unsplash.com/premium_photo-1770933116362-68fc2f2e6c33?w=1920&q=80",
     title: "Fashion Forward",
     subtitle: "Where elegance meets innovation",
     gradient: "from-black/70 via-rose-900/60 to-black/70",
@@ -41,7 +42,7 @@ const slides = [
 
 export default function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const { mydata, setCategory, addToCart , user } = useContext(CartContext);
+  const { mydata, setCategory, addToCart, user } = useContext(CartContext);
   const [showWishlistToast, setShowWishlistToast] = useState(false);
 
   useEffect(() => {
@@ -64,7 +65,7 @@ export default function HeroSlider() {
   };
 
 
-const addToWishlist = async (item) => {
+  const addToWishlist = async (item) => {
     if (user && user.Email) {
       try {
         await axios.post("http://localhost:3000/wishlist/add", {
@@ -77,9 +78,9 @@ const addToWishlist = async (item) => {
           },
         });
         setShowWishlistToast(true);
-          setTimeout(() => {
-            setShowWishlistToast(false);
-          }, 2000);
+        setTimeout(() => {
+          setShowWishlistToast(false);
+        }, 2000);
       } catch (error) {
         if (error.response?.status === 409) {
           alert("Item already in wishlist!");
@@ -626,20 +627,20 @@ const addToWishlist = async (item) => {
           </motion.div>
         </div>
       </section>
-           <AnimatePresence>
-            {showWishlistToast && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8, y: 50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.8, y: 50 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className="catalog-toast"
-              >
-                <Heart className="catalog-toast-icon" />
-                <span className="catalog-toast-text">Added to Wishlist!</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+      <AnimatePresence>
+        {showWishlistToast && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 50 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="catalog-toast"
+          >
+            <Heart className="catalog-toast-icon" />
+            <span className="catalog-toast-text">Added to Wishlist!</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Testimonials Section */}
       <section className="testimonials-section">

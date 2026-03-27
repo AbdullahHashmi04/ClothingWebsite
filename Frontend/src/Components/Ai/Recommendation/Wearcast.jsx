@@ -1,44 +1,40 @@
-import { useState, useCallback } from "react";
-
-// ── Google Fonts injected once ────────────────────────────────────────────────
-const fontLink = document.createElement("link");
-fontLink.rel  = "stylesheet";
-fontLink.href = "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Outfit:wght@300;400;500&display=swap";
-document.head.appendChild(fontLink);
-
-const style = document.createElement("style");
-style.textContent = `
-  body { font-family: 'Outfit', sans-serif; background: #faf9f7; }
-  .font-display { font-family: 'Cormorant Garamond', Georgia, serif; }
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .animate-fade-up { animation: fadeUp 0.5s ease both; }
-  .card-delay-1 { animation-delay: 0.05s; }
-  .card-delay-2 { animation-delay: 0.10s; }
-  .card-delay-3 { animation-delay: 0.15s; }
-  .card-delay-4 { animation-delay: 0.20s; }
-  .card-delay-5 { animation-delay: 0.25s; }
-  .card-delay-6 { animation-delay: 0.30s; }
-  .card-delay-7 { animation-delay: 0.35s; }
-  .spinner {
-    width: 32px; height: 32px;
-    border: 3px solid #e5e1d8;
-    border-top-color: #c8a96e;
-    border-radius: 50%;
-    animation: spin 0.75s linear infinite;
-  }
-  .tag-hover:hover { border-color: #c8a96e !important; }
-  input:focus { outline: none; box-shadow: 0 0 0 3px rgba(200,169,110,0.18); }
-`;
-document.head.appendChild(style);
+import { useState, useCallback, useContext, useMemo } from "react";
+import { Link } from "react-router-dom";
+import { ShoppingBag } from "lucide-react";
+import CartContext from "../../Context/CartContext";
+import "../../../Style/Wearcast.css";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const API_BASE = "http://localhost:3000/api/weather";
 const DAYS     = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const MONTHS   = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// Maps weather label → product categories to highlight
+// category values in DB: shirts, pants, Jeans, dresses, jackets, shoes, accessories, other, men, women, kids
+const WEATHER_CATEGORY_MAP = {
+  /* Base "what to wear" → DB categories */
+  cold:    ["jackets", "shirts", "pants", "Jeans"],
+  cool:    ["jackets", "shirts", "pants", "Jeans"],
+  mild:    ["shirts", "pants", "Jeans", "dresses"],
+  warm:    ["shirts", "dresses", "accessories"],
+  hot:     ["shirts", "dresses", "accessories", "shoes"],
+  rainy:   ["jackets", "shoes", "accessories"],
+  snowy:   ["jackets", "shoes", "accessories"],
+};
+
+/** Decide which bucket to use from temp avg */
+const getWeatherBucket = (minTemp, maxTemp, code) => {
+  const avg = (minTemp + maxTemp) / 2;
+  const RAIN_CODES  = [51,53,55,56,57,61,63,65,66,67,80,81,82,85,86,95,96,99];
+  const SNOW_CODES  = [71,73,75,77,85,86];
+  if (SNOW_CODES.includes(code)) return "snowy";
+  if (RAIN_CODES.includes(code)) return "rainy";
+  if (avg < 8)  return "cold";
+  if (avg < 15) return "cool";
+  if (avg < 22) return "mild";
+  if (avg < 28) return "warm";
+  return "hot";
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const formatDate = (iso) => {
@@ -50,82 +46,73 @@ const formatDate = (iso) => {
   };
 };
 
-const categoryStyle = (cat) => {
-  if (cat === "acc")  return "bg-sky-50 border-sky-200 text-sky-700";
-  if (cat === "feet") return "bg-amber-50 border-amber-200 text-amber-800";
-  if (cat === "tip")  return "bg-red-50 border-red-200 text-red-600";
-  if (cat === "base") return "bg-stone-100 border-stone-200 text-stone-700";
-  if (cat === "mid")  return "bg-orange-50 border-orange-200 text-orange-700";
-  if (cat === "outer")return "bg-indigo-50 border-indigo-200 text-indigo-700";
-  return "bg-stone-50 border-stone-200 text-stone-600";
+const tagClass = (cat) => {
+  if (cat === "acc")    return "wc-tag wc-tag--acc";
+  if (cat === "feet")   return "wc-tag wc-tag--feet";
+  if (cat === "tip")    return "wc-tag wc-tag--tip";
+  if (cat === "base")   return "wc-tag wc-tag--base";
+  if (cat === "mid")    return "wc-tag wc-tag--mid";
+  if (cat === "outer")  return "wc-tag wc-tag--outer";
+  if (cat === "bottom") return "wc-tag wc-tag--bottom";
+  return "wc-tag wc-tag--base";
 };
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-const ClothingTag = ({ item, category, icon }) => (
-  <span
-    className={`tag-hover inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-colors duration-200 ${categoryStyle(category)}`}
-  >
-    <span>{icon}</span>
-    {item}
-  </span>
-);
+// ── Sub-components ─────────────────────────────────────────────────────────────
 
 const MetaPill = ({ icon, value }) => (
-  <div className="flex items-center gap-1.5 text-xs text-stone-400 font-light">
-    <span className="text-sm">{icon}</span>
+  <div className="wc-meta-pill">
+    <span>{icon}</span>
     {value}
   </div>
 );
 
-const DayCard = ({ day, index }) => {
+/** Mini product card displayed inside each DayCard */
+const ProductMiniCard = ({ product }) => {
+  const imgSrc = product.imageUrl;
+  return (
+    <Link to="/catalog" className="wc-prod-card" title={product.name}>
+      <div className="wc-prod-img-wrap">
+        {imgSrc
+          ? <img src={imgSrc} alt={product.name} className="wc-prod-img" loading="lazy" />
+          : <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", color:"#d1d5db" }}><ShoppingBag size={28} /></div>
+        }
+      </div>
+      <div className="wc-prod-info">
+        <p className="wc-prod-name">{product.name}</p>
+        <p className="wc-prod-price">Rs. {(product.price || 0).toLocaleString()}</p>
+      </div>
+    </Link>
+  );
+};
+
+/** One day card */
+const DayCard = ({ day, index, matchedProducts }) => {
   const [open, setOpen] = useState(index === 0);
   const { dayName, dateStr, isToday } = formatDate(day.date);
 
   return (
-    <div
-      className={`animate-fade-up card-delay-${index + 1} rounded-2xl border transition-all duration-300 overflow-hidden
-        ${isToday
-          ? "border-amber-300 bg-gradient-to-br from-amber-50 via-white to-orange-50 shadow-md shadow-amber-100"
-          : "border-stone-200 bg-white hover:border-stone-300 hover:shadow-sm"
-        }`}
-    >
-      {/* Card header — always visible, click to toggle */}
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full text-left px-5 pt-5 pb-4 flex items-start justify-between gap-3"
-      >
-        <div className="flex items-start gap-4">
-          {/* Date block */}
-          <div className="min-w-0">
-            <p className={`text-xs tracking-widest uppercase font-medium mb-0.5 ${isToday ? "text-amber-600" : "text-stone-400"}`}>
-              {isToday ? "— Today —" : dayName}
-            </p>
-            <p className="font-display text-2xl font-semibold text-stone-800 leading-none">
-              {dateStr}
-            </p>
-          </div>
+    <div className={`wc-card ${isToday ? "wc-card--today" : ""}`}>
+      {/* Header */}
+      <button className="wc-card-header" onClick={() => setOpen(o => !o)}>
+        <div>
+          <p className={`wc-day-label ${isToday ? "wc-day-label--today" : ""}`}>
+            {isToday ? "— Today —" : dayName}
+          </p>
+          <p className="wc-day-date">{dateStr}</p>
         </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          {/* Temp range */}
-          <div className="text-right">
-            <span className="font-display text-2xl font-bold text-amber-600">
-              {Math.round(day.maxTemp)}°
-            </span>
-            <span className="text-stone-400 text-sm ml-1">
-              / {Math.round(day.minTemp)}°
-            </span>
+        <div className="wc-temp-emoji">
+          <div>
+            <span className="wc-temp-max">{Math.round(day.maxTemp)}°</span>
+            <span className="wc-temp-min">/ {Math.round(day.minTemp)}°</span>
           </div>
-          {/* Emoji */}
-          <span className="text-3xl leading-none">{day.emoji}</span>
+          <span className="wc-emoji">{day.emoji}</span>
         </div>
       </button>
 
-      {/* Condition + meta row */}
-      <div className="px-5 pb-3 flex items-center justify-between">
-        <p className="text-sm text-stone-500 font-light">{day.condition}</p>
-        <div className="flex gap-4">
+      {/* Condition + meta */}
+      <div className="wc-card-meta">
+        <p className="wc-condition">{day.condition}</p>
+        <div className="wc-meta-pills">
           <MetaPill icon="💨" value={`${Math.round(day.wind)} km/h`} />
           {day.precipitation > 0 && (
             <MetaPill icon="💧" value={`${day.precipitation.toFixed(1)} mm`} />
@@ -133,32 +120,41 @@ const DayCard = ({ day, index }) => {
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="mx-5 border-t border-stone-100" />
+      <hr className="wc-card-divider" />
 
-      {/* Clothing section — collapsible */}
+      {/* Clothing suggestions */}
       <div
-        className="overflow-hidden transition-all duration-300"
-        style={{ maxHeight: open ? "400px" : "0px", opacity: open ? 1 : 0 }}
+        className="wc-clothes-section"
+        style={{ maxHeight: open ? "700px" : "0px", opacity: open ? 1 : 0 }}
       >
-        <div className="px-5 pt-4 pb-5">
-          <p className="text-xs tracking-widest uppercase text-stone-400 font-medium mb-3">
-            What to wear
-          </p>
-          <div className="flex flex-wrap gap-2">
+        <div className="wc-clothes-inner">
+          <p className="wc-clothes-label">What to wear</p>
+          <div className="wc-clothes-tags">
             {day.clothes.map((c, i) => (
-              <ClothingTag key={i} {...c} />
+              <span key={i} className={tagClass(c.category)}>
+                <span>{c.icon}</span>
+                {c.item}
+              </span>
             ))}
           </div>
         </div>
+
+        {/* DB Products matched to this day's weather */}
+        {matchedProducts.length > 0 && (
+          <div className="wc-products-section">
+            <p className="wc-products-label">Shop for this weather</p>
+            <div className="wc-products-scroll">
+              {matchedProducts.map(prod => (
+                <ProductMiniCard key={prod._id} product={prod} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Toggle hint */}
-      <div className="px-5 pb-3 flex justify-center">
-        <button
-          onClick={() => setOpen(o => !o)}
-          className="text-xs text-stone-400 hover:text-amber-600 transition-colors duration-200 flex items-center gap-1"
-        >
+      <div className="wc-toggle-hint">
+        <button className="wc-toggle-btn" onClick={() => setOpen(o => !o)}>
           {open ? "Hide outfit ↑" : "Show outfit ↓"}
         </button>
       </div>
@@ -166,63 +162,65 @@ const DayCard = ({ day, index }) => {
   );
 };
 
-// ── Empty / loading / error states ────────────────────────────────────────────
+// ── States ──────────────────────────────────────────────────────────────────
 const EmptyState = () => (
-  <div className="flex flex-col items-center justify-center py-28 gap-4 text-center animate-fade-up">
-    <span className="text-6xl">🌍</span>
-    <p className="text-stone-400 font-light text-sm max-w-xs leading-relaxed">
-      Search a city above to get your personalised 7-day outfit forecast
+  <div className="wc-state">
+    <span className="wc-state-emoji">🌍</span>
+    <p className="wc-state-msg">
+      Search a city above to get your personalised 7-day outfit forecast and product suggestions.
     </p>
   </div>
 );
 
 const LoadingState = () => (
-  <div className="flex flex-col items-center justify-center py-28 gap-5 animate-fade-up">
-    <div className="spinner" />
-    <p className="text-stone-400 font-light text-sm">Fetching your forecast…</p>
+  <div className="wc-state">
+    <div className="wc-spinner" />
+    <p className="wc-state-msg">Fetching your forecast…</p>
   </div>
 );
 
 const ErrorState = ({ message }) => (
-  <div className="flex flex-col items-center justify-center py-28 gap-4 animate-fade-up">
-    <span className="text-5xl">⛅</span>
-    <p className="text-red-400 text-sm font-light max-w-xs text-center leading-relaxed">{message}</p>
+  <div className="wc-state">
+    <span className="wc-state-emoji">⛅</span>
+    <p className="wc-state-msg wc-state-msg--error">{message}</p>
   </div>
 );
 
-// ── Legend ────────────────────────────────────────────────────────────────────
+// ── Legend ──────────────────────────────────────────────────────────────────
 const Legend = () => (
-  <div className="flex flex-wrap gap-3 mb-8 animate-fade-up">
+  <div className="wc-legend">
     {[
-      { cat: "base",  label: "Base layer" },
-      { cat: "mid",   label: "Mid layer"  },
-      { cat: "outer", label: "Outer"      },
-      { cat: "feet",  label: "Footwear"   },
-      { cat: "acc",   label: "Accessories"},
-      { cat: "tip",   label: "Advisory"   },
-    ].map(({ cat, label }) => (
-      <span key={cat} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border ${categoryStyle(cat)}`}>
+      { cls: "base",   label: "Base layer" },
+      { cls: "mid",    label: "Mid layer"  },
+      { cls: "outer",  label: "Outer"      },
+      { cls: "bottom", label: "Bottoms"    },
+      { cls: "feet",   label: "Footwear"   },
+      { cls: "acc",    label: "Accessories"},
+      { cls: "tip",    label: "Advisory"   },
+    ].map(({ cls, label }) => (
+      <span key={cls} className={`wc-legend-item wc-tag--${cls}`}>
         {label}
       </span>
     ))}
   </div>
 );
 
-// ── Main app ──────────────────────────────────────────────────────────────────
+// ── Main component ────────────────────────────────────────────────────────────
 export default function WearCast() {
   const [city,    setCity]    = useState("");
   const [data,    setData]    = useState(null);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
 
+  // Pull all products from global context (fetched in CartContext on mount)
+  const { productData } = useContext(CartContext);
+
   const fetchForecast = useCallback(async () => {
     const q = city.trim();
     if (!q) return;
-
     setLoading(true);
     setError("");
     setData(null);
-
     try {
       const res  = await fetch(`${API_BASE}/weekly/${encodeURIComponent(q)}`);
       const json = await res.json();
@@ -237,81 +235,87 @@ export default function WearCast() {
 
   const onKeyDown = (e) => { if (e.key === "Enter") fetchForecast(); };
 
+  /**
+   * Build a map: day.date → matched products list.
+   * Match products whose DB category is in the bucket's category list.
+   * Limit to 6 products per day to keep the UI tidy.
+   */
+  const productsByDay = useMemo(() => {
+    if (!data || !productData?.length) return {};
+    const map = {};
+    data.forecast.forEach(day => {
+      const bucket = getWeatherBucket(day.minTemp, day.maxTemp, day.code);
+      const cats   = WEATHER_CATEGORY_MAP[bucket] || [];
+      map[day.date] = productData
+        .filter(p => cats.some(c => p.category?.toLowerCase() === c.toLowerCase()))
+        .slice(0, 6);
+    });
+    return map;
+  }, [data, productData]);
+
   return (
-    <div
-      className="bg-stone-50 flex flex-col items-center min-h-screen"
-      style={{
-        fontFamily: "'Outfit', sans-serif",
-        marginTop: "80px",
-        minHeight: "calc(100vh - 80px)",
-      }}
-    >
-      {/* Amber accent stripe just below navbar */}
-      <div className="h-0.5 w-full bg-gradient-to-r from-amber-300 via-orange-300 to-amber-400" />
+    <div className="wc-page">
+      {/* ── Hero / Search ─────────────────────── */}
+      <section className="wc-hero">
+        <div className="wc-hero-badge">☀️ AI Weather Stylist</div>
+        <h1 className="wc-hero-title">
+          Wear<em>Cast</em>
+        </h1>
+        <p className="wc-hero-sub">Your 7-day outfit & product planner</p>
 
-      <div className="max-w-5xl mx-auto px-5 pb-24">
-
-        {/* ── Header ───────────────────────────────────────────────────────── */}
-        <header className="pt-8 pb-8">
-          <div className="flex items-end gap-3 mb-1">
-            <h1 className="font-display text-6xl font-bold text-stone-800 leading-none tracking-tight">
-              Wear
-              <span className="italic font-medium text-amber-500">Cast</span>
-            </h1>
-            <span className="text-4xl mb-1">☀️</span>
-          </div>
-          <p className="text-stone-400 text-xs tracking-[0.2em] uppercase font-light mt-2">
-            Your weekly outfit planner
-          </p>
-        </header>
-
-        {/* ── Search ───────────────────────────────────────────────────────── */}
-        <div className="flex gap-3 mb-12 max-w-lg">
+        <div className="wc-search-wrap">
           <input
+            id="wearcast-city-input"
             type="text"
             value={city}
             onChange={e => setCity(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Enter a city… e.g. Tokyo, Paris"
-            className="flex-1 bg-white border border-stone-200 rounded-xl px-5 py-3.5 text-sm text-stone-700 placeholder-stone-300 font-light transition-all duration-200"
-            style={{ fontFamily: "'Outfit', sans-serif" }}
+            placeholder="Enter a city… e.g. Karachi, London"
+            className="wc-search-input"
           />
           <button
+            id="wearcast-forecast-btn"
             onClick={fetchForecast}
             disabled={loading}
-            className="bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm px-6 py-3.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 whitespace-nowrap shadow-sm shadow-amber-200"
+            className="wc-search-btn"
           >
             {loading ? "Loading…" : "Get Forecast"}
           </button>
         </div>
+      </section>
 
-        {/* ── Results ──────────────────────────────────────────────────────── */}
+      {/* ── Results ───────────────────────────── */}
+      <div className="wc-content">
         {loading && <LoadingState />}
         {!loading && error && <ErrorState message={error} />}
 
         {!loading && !error && data && (
           <>
             {/* City label */}
-            <div className="flex items-baseline gap-3 mb-6 animate-fade-up">
-              <h2 className="font-display text-4xl font-bold text-stone-800">{data.city}</h2>
+            <div className="wc-city-row">
+              <h2 className="wc-city-name">{data.city}</h2>
               {data.country && (
-                <span className="text-xs text-stone-400 tracking-widest uppercase">{data.country}</span>
+                <span className="wc-city-country">{data.country}</span>
               )}
             </div>
 
             {/* Tag legend */}
             <Legend />
 
-            {/* Cards grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {/* Cards */}
+            <div className="wc-grid">
               {data.forecast.map((day, i) => (
-                <DayCard key={day.date} day={day} index={i} />
+                <DayCard
+                  key={day.date}
+                  day={day}
+                  index={i}
+                  matchedProducts={productsByDay[day.date] || []}
+                />
               ))}
             </div>
 
-            {/* Footer note */}
-            <p className="text-center text-xs text-stone-300 font-light mt-10">
-              Powered by Open-Meteo · Data updates every hour
+            <p className="wc-footer-note">
+              Powered by Open-Meteo · Products sourced from our DB · Data updates every hour
             </p>
           </>
         )}
