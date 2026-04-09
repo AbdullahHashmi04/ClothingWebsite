@@ -209,7 +209,6 @@ export default function Navbar() {
     { path: "/catalog", label: "Catalog" },
     // { path: "/about", label: "About" },
     { path: "/trending", label: "Trending" },
-    { path: "/glasses", label: "Glasses" },
     { path: "/wearcast", label: "WearCast" }
   ];
 

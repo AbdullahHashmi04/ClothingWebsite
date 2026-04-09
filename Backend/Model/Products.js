@@ -21,9 +21,33 @@ const productSchema = new mongoose.Schema({
   imageUrl: {
     type: String
   },
+  images: [{
+    type: String
+  }],
   originalPrice: {
     type: Number,
     min: 0
+  },
+  discountMeta: {
+    discountId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Discount'
+    },
+    code: {
+      type: String,
+      default: ''
+    },
+    type: {
+      type: String,
+      default: ''
+    },
+    value: {
+      type: Number,
+      default: 0
+    },
+    appliedAt: {
+      type: Date
+    }
   },
   category: {
     type: String,

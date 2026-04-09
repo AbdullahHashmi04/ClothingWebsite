@@ -32,7 +32,6 @@ const UserAddresses = lazy(() => import("./Components/User/UserDashboard/Address
 const Feedback = lazy(() => import("./Components/User/UserDashboard/Feedback.jsx"))
 const AdminFeedback = lazy(() => import("./Components/Admin/Feedback.jsx"))
 const AdminComplaints = lazy(() => import("./Components/Admin/Complaints.jsx"))
-const GlassesTryOn = lazy(() => import("./Components/Ai/GlassesTryOn/GlassesTryOn.jsx"))
 const WearCast = lazy(() => import("./Components/Ai/Recommendation/Wearcast.jsx"))
 
 
@@ -97,7 +96,6 @@ const router = createBrowserRouter([
       { path: "trending", element: <Suspense fallback={<PageLoader />}><Trending /></Suspense> },
       { path: "auth/callback", element: <AuthCallback /> },
       { path: "feedback", element: <Suspense fallback={<PageLoader />}><Feedback /></Suspense> },
-      { path: "glasses", element: <Suspense fallback={<PageLoader />}><GlassesTryOn /></Suspense> },
       { path: "wearcast", element: <Suspense fallback={<PageLoader />}><WearCast /></Suspense> }
     ],
   },

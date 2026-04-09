@@ -33,12 +33,52 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-router.post('/addProduct', upload.single('image'), async (req, res) => {
+const productImageUpload = upload.fields([
+    { name: "images", maxCount: 8 },
+    { name: "image", maxCount: 1 },
+]);
+
+const toImageUrl = (file) => `http://localhost:3000/uploads/products/${file.filename}`;
+
+const parseArrayField = (value) => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+
+    try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+};
+
+const normalizeExistingImages = (product) => {
+    if (Array.isArray(product?.images) && product.images.length > 0) {
+        return product.images;
+    }
+    if (product?.imageUrl) {
+        return [product.imageUrl];
+    }
+    return [];
+};
+
+router.post('/addProduct', productImageUpload, async (req, res) => {
     try {
         const productData = { ...req.body };
-        if (req.file) {
-            productData.imageUrl = `http://localhost:3000/uploads/products/${req.file.filename}`;
+
+        const uploadedFiles = [
+            ...(req.files?.images || []),
+            ...(req.files?.image || []),
+        ];
+        const uploadedImageUrls = uploadedFiles.map(toImageUrl);
+        const existingBodyImages = parseArrayField(req.body.images);
+        const finalImages = [...existingBodyImages, ...uploadedImageUrls].filter(Boolean);
+
+        if (finalImages.length > 0) {
+            productData.images = [...new Set(finalImages)];
+            productData.imageUrl = productData.images[0];
         }
+
         const product = new Product(productData);
         await product.save();
         res.status(201).json({ message: "Product added successfully", product });
@@ -48,12 +88,38 @@ router.post('/addProduct', upload.single('image'), async (req, res) => {
     }
 });
 
-router.put('/updateProduct/:id', upload.single('image'), async (req, res) => {
+router.put('/updateProduct/:id', productImageUpload, async (req, res) => {
     try {
         const productData = { ...req.body };
-        if (req.file) {
-            productData.imageUrl = `http://localhost:3000/uploads/products/${req.file.filename}`;
+
+        const existingProduct = await Product.findById(req.params.id);
+        if (!existingProduct) {
+            return res.status(404).json({ message: "Product not found" });
         }
+
+        const uploadedFiles = [
+            ...(req.files?.images || []),
+            ...(req.files?.image || []),
+        ];
+        const uploadedImageUrls = uploadedFiles.map(toImageUrl);
+
+        const hasRetainImages = typeof req.body.retainImages !== "undefined";
+        const retainedImages = parseArrayField(req.body.retainImages);
+        const fallbackImages = normalizeExistingImages(existingProduct);
+        const baseImages = hasRetainImages ? retainedImages : fallbackImages;
+        const finalImages = [...baseImages, ...uploadedImageUrls].filter(Boolean);
+
+        delete productData.retainImages;
+        delete productData.images;
+
+        if (finalImages.length > 0) {
+            productData.images = [...new Set(finalImages)];
+            productData.imageUrl = productData.images[0];
+        } else {
+            productData.images = [];
+            productData.imageUrl = "";
+        }
+
         const product = await Product.findByIdAndUpdate(req.params.id, productData, { new: true });
         res.status(200).json({ message: "Product updated successfully", product });
     } catch (err) {

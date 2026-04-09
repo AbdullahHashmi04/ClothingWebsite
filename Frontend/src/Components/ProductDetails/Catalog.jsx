@@ -21,16 +21,29 @@ export default function ClothingCatalog() {
   const { user } = useContext(CartContext);
   const [showWishlistToast, setShowWishlistToast] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [modalImageIndex, setModalImageIndex] = useState(0);
   const [modalSize, setModalSize] = useState("M");
   const [modalQuantity, setModalQuantity] = useState(1);
   const [wishlistedItems, setWishlistedItems] = useState(new Set());
+
+  const getProductImages = (product) => {
+    if (Array.isArray(product?.images) && product.images.length > 0) {
+      return product.images;
+    }
+    return product?.imageUrl ? [product.imageUrl] : [];
+  };
+
+  const getProductImage = (product, index = 0) => {
+    const images = getProductImages(product);
+    return images[index] || images[0] || product?.image || product?.thumbnail || "";
+  };
 
   const handleAddToCart = (product, e) => {
     if (e) e.stopPropagation();
     addToCart({
       ...product,
       name: product.title || product.name,
-      img: product.imageUrl || product.image || product.images?.[0] || product.thumbnail,
+      img: getProductImage(product),
       price: product.price || Math.floor(Math.random() * 200) + 20
     });
     setShowToast(true);
@@ -42,7 +55,7 @@ export default function ClothingCatalog() {
     addVtoImage({
       ...product,
       name: product.title || product.name,
-      img: product.imageUrl || product.image || product.images?.[0] || product.thumbnail,
+      img: getProductImage(product),
       price: product.price || Math.floor(Math.random() * 200) + 20
     });
   };
@@ -59,7 +72,7 @@ export default function ClothingCatalog() {
       try {
         await axios.post("http://localhost:3000/wishlist/add", {
           Email: user.Email,
-          product: { _id: item._id, name: item.name, price: item.price, imageUrl: item.imageUrl },
+          product: { _id: item._id, name: item.name, price: item.price, imageUrl: getProductImage(item) },
         });
         setWishlistedItems(prev => new Set([...prev, item._id]));
         setShowWishlistToast(true);
@@ -79,6 +92,7 @@ export default function ClothingCatalog() {
 
   const openModal = (product) => {
     setSelectedProduct(product);
+    setModalImageIndex(0);
     setModalSize("M");
     setModalQuantity(1);
     document.body.style.overflow = "hidden";
@@ -94,7 +108,7 @@ export default function ClothingCatalog() {
     addToCart({
       ...selectedProduct,
       name: selectedProduct.title || selectedProduct.name,
-      img: selectedProduct.imageUrl || selectedProduct.image || selectedProduct.images?.[0],
+      img: getProductImage(selectedProduct, modalImageIndex),
       price: selectedProduct.price || 0,
       size: modalSize,
       quantity: modalQuantity,
@@ -104,13 +118,9 @@ export default function ClothingCatalog() {
     closeModal();
   };
 
-  const getDiscountedPrice = (product) => {
-    const price = product.price || 0;
-    const discount = product.discountPercentage || 0;
-    return (price * (1 - discount / 100)).toFixed(0);
-  };
-
   const getRating = (product) => product.rating || (4 + Math.random()).toFixed(1);
+  const selectedProductImages = selectedProduct ? getProductImages(selectedProduct) : [];
+  const selectedMainImage = selectedProduct ? getProductImage(selectedProduct, modalImageIndex) : "";
 
   return (
     <div className="cat-page">
@@ -198,7 +208,7 @@ export default function ClothingCatalog() {
                   >
                     {/* Image */}
                     <div className="cat-card-img-wrap">
-                      <img src={item.imageUrl} alt={item.name} className="cat-card-img" loading="lazy" />
+                      <img src={getProductImage(item)} alt={item.name} className="cat-card-img" loading="lazy" />
 
                       {/* Badges */}
                       <div className="cat-card-badges">
@@ -295,11 +305,34 @@ export default function ClothingCatalog() {
                 {/* Left – Image */}
                 <div className="modal-img-section">
                   <div className="modal-img-wrap">
-                    <img src={selectedProduct.imageUrl} alt={selectedProduct.name} className="modal-img" />
+                    <img src={selectedMainImage} alt={selectedProduct.name} className="modal-img" />
                     {selectedProduct.discountPercentage > 0 && (
                       <div className="modal-img-badge">-{Math.round(selectedProduct.discountPercentage)}% OFF</div>
                     )}
                   </div>
+                  {selectedProductImages.length > 1 && (
+                    <div style={{ display: "flex", gap: "8px", marginTop: "10px", flexWrap: "wrap" }}>
+                      {selectedProductImages.map((img, idx) => (
+                        <button
+                          key={`${selectedProduct._id || "product"}-${idx}`}
+                          type="button"
+                          onClick={() => setModalImageIndex(idx)}
+                          style={{
+                            border: idx === modalImageIndex ? "2px solid #9333ea" : "1px solid #e5e7eb",
+                            borderRadius: "8px",
+                            overflow: "hidden",
+                            padding: 0,
+                            width: "52px",
+                            height: "52px",
+                            cursor: "pointer",
+                            background: "#fff",
+                          }}
+                        >
+                          <img src={img} alt={`${selectedProduct.name} ${idx + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {/* Trust badges */}
                   <div className="modal-trust">
                     <div className="modal-trust-item"><Truck size={14} /><span>Free Shipping</span></div>

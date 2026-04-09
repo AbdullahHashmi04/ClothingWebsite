@@ -5,7 +5,7 @@ const router  = express.Router();
 // ─── Geocoding ────────────────────────────────────────────────────────────────
 const getCoordinates = async (city) => {
     const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
-    const res = await axios.get(url, { timeout: 8000 });
+    const res = await axios.get(url, { timeout: 4000 });
     if (!res.data.results || res.data.results.length === 0)
         throw new Error(`City "${city}" not found`);
     const { latitude, longitude, name, country } = res.data.results[0];

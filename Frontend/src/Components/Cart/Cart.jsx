@@ -73,7 +73,7 @@ function Cart() {
   };
 
   const onSubmit = async (data) => {
-    console.log("Form Data is ", data); 
+    console.log("Form Data is ", data);
     let r = await axios.post("http://localhost:3000/order", {
       item: data,
     });
@@ -235,8 +235,8 @@ function Cart() {
                           {appliedDiscount.type === "Percentage"
                             ? `${appliedDiscount.value}% off`
                             : appliedDiscount.type === "Fixed Amount"
-                            ? `$${appliedDiscount.value} off`
-                            : "Free Shipping"}
+                              ? `$${appliedDiscount.value} off`
+                              : "Free Shipping"}
                         </span>
                       </div>
                       <button
@@ -250,7 +250,6 @@ function Cart() {
                     <div>
                       <div className="flex gap-2">
                         <div className="relative flex-1">
-                          <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                           <input
                             type="text"
                             placeholder="Promo code"
@@ -337,7 +336,7 @@ function Cart() {
                 </div>
 
                 <div className="space-y-3 relative z-10">
-                 <Link to='/orderform'> <button
+                  <Link to='/orderform'> <button
                     className="w-full flex items-center justify-center gap-2 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all font-bold text-lg shadow-lg shadow-indigo-600/25 active:scale-95 cursor-pointer relative z-10"
                   >
                     Checkout
@@ -354,17 +353,17 @@ function Cart() {
 
 
 
-           {loginStatus ? (
-            <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-center gap-4 text-slate-400">
-              <span className="text-xs font-semibold animate-pulse uppercase tracking-wider">You are signed in!</span>
-            </div>
-           ) : (
-            <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-center gap-4 text-slate-400">
-             <Link to="/login" className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
-              <span className="text-xs font-semibold animate-pulse uppercase tracking-wider">Sign In for exclusive offers</span>
-             </Link>
-            </div>
-           )}
+                {loginStatus ? (
+                  <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-center gap-4 text-slate-400">
+                    <span className="text-xs font-semibold animate-pulse uppercase tracking-wider">You are signed in!</span>
+                  </div>
+                ) : (
+                  <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-center gap-4 text-slate-400">
+                    <Link to="/login" className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
+                      <span className="text-xs font-semibold animate-pulse uppercase tracking-wider">Sign In for exclusive offers</span>
+                    </Link>
+                  </div>
+                )}
               </motion.div>
             </div>
           </div>
