@@ -7,13 +7,14 @@ import {
   Shield, Zap
 } from "lucide-react";
 import "../../Style/Catalog.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const CATEGORIES = ["All", "shirts", "pants", "accessories", "dresses"];
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 
 export default function ClothingCatalog() {
+  const navigate = useNavigate();
   const { addToCart, mycategory, setCategory, catalogData, addVtoImage } = useContext(CartContext);
   const [showToast, setShowToast] = useState(false);
   const [query, setQuery] = useState("");
@@ -58,6 +59,19 @@ export default function ClothingCatalog() {
       img: getProductImage(product),
       price: product.price || Math.floor(Math.random() * 200) + 20
     });
+  };
+
+  // Navigate to VTO after setting the product (combines both steps safely)
+  const handleVtoClick = (product, e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    addVtoImage({
+      ...product,
+      name: product.title || product.name,
+      img: getProductImage(product),
+      price: product.price || Math.floor(Math.random() * 200) + 20
+    });
+    navigate('/vto');
   };
 
   const filteredProducts = catalogData.filter((p) => {
@@ -227,11 +241,12 @@ export default function ClothingCatalog() {
                       </button>
 
                       {/* VTO Button */}
-                      <Link to="/vto" onClick={(e) => e.stopPropagation()}>
-                        <button className="cat-card-vto" onClick={(e) => handleVtoImages(item, e)}>
-                          <span>Try On</span> <ChevronRight size={13} />
-                        </button>
-                      </Link>
+                      <button
+                        className="cat-card-vto"
+                        onClick={(e) => handleVtoClick(item, e)}
+                      >
+                        <span>Try On</span> <ChevronRight size={13} />
+                      </button>
 
                       {/* Overlay */}
                       <div className="cat-card-overlay">
@@ -443,11 +458,17 @@ export default function ClothingCatalog() {
                     <button className="modal-cta-cart" onClick={handleModalAddToCart} id="modal-add-to-cart-btn">
                       <ShoppingBag size={18} /> Add to Cart · Rs. {((selectedProduct.price || 0) * modalQuantity).toLocaleString()}
                     </button>
-                    <Link to="/vto" onClick={closeModal}>
-                      <button className="modal-cta-vto" onClick={() => handleVtoImages(selectedProduct)} id="modal-vto-btn">
-                        Virtual Try-On
-                      </button>
-                    </Link>
+                    <button
+                      className="modal-cta-vto"
+                      id="modal-vto-btn"
+                      onClick={() => {
+                        handleVtoImages(selectedProduct);
+                        closeModal();
+                        navigate('/vto');
+                      }}
+                    >
+                      Virtual Try-On
+                    </button>
                   </div>
                 </div>
               </div>

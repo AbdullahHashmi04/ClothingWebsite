@@ -1,12 +1,11 @@
-import React, { useContext, useEffect, useState, useRef } from 'react'
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import CartContext from '../../Context/CartContext';
-import axios from "axios"
+import axios from 'axios';
 
 export default function Vto() {
-
   const [humanPreview, setHumanPreview] = useState(null);
   const [humanFile, setHumanFile] = useState(null);
-  const { ImageVto } = useContext(CartContext);
+  const { ImageVto, addVtoImage, catalogData } = useContext(CartContext);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -14,6 +13,15 @@ export default function Vto() {
   const [dragActive, setDragActive] = useState(false);
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef(null);
+  const [hoveredProduct, setHoveredProduct] = useState(null);
+  const [selectedGarmentId, setSelectedGarmentId] = useState(null);
+
+  // Sync selected garment id from context
+  useEffect(() => {
+    if (ImageVto && ImageVto.length > 0 && ImageVto[0]?._id) {
+      setSelectedGarmentId(ImageVto[0]._id);
+    }
+  }, [ImageVto]);
 
   // Simulated progress bar during loading
   useEffect(() => {
@@ -22,10 +30,7 @@ export default function Vto() {
       setProgress(0);
       interval = setInterval(() => {
         setProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(interval);
-            return 90;
-          }
+          if (prev >= 90) { clearInterval(interval); return 90; }
           return prev + Math.random() * 8;
         });
       }, 1500);
@@ -54,11 +59,8 @@ export default function Vto() {
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
+    if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true);
+    else if (e.type === 'dragleave') setDragActive(false);
   };
 
   const handleDrop = (e) => {
@@ -70,13 +72,30 @@ export default function Vto() {
     }
   };
 
+  // Helper to extract image from product
+  const getProductImage = (product) => {
+    if (Array.isArray(product?.images) && product.images.length > 0) return product.images[0];
+    return product?.imageUrl || product?.img || product?.image || product?.thumbnail || '';
+  };
+
+  // Select a product from the shelf as the garment
+  const handleSelectGarment = (product) => {
+    const img = getProductImage(product);
+    addVtoImage({
+      ...product,
+      name: product.title || product.name,
+      img,
+    });
+    setSelectedGarmentId(product._id || product.id);
+  };
+
   const handleTryOn = async () => {
     if (!humanFile) {
-      setError("Please upload your photo first.");
+      setError('Please upload your photo first.');
       return;
     }
     if (!ImageVto || ImageVto.length === 0 || !ImageVto[0]?.img) {
-      setError("No cloth image selected. Please select a product first.");
+      setError('No garment selected. Please select a product from the shelf below.');
       return;
     }
 
@@ -85,16 +104,13 @@ export default function Vto() {
     setResult(null);
 
     try {
-      // 1) Fetch the cloth image URL and convert to a File for upload
       const clothImageUrl = ImageVto[0].img;
       const clothResponse = await fetch(clothImageUrl);
       const clothBlob = await clothResponse.blob();
-
-      const clothFile = new File([clothBlob], "cloth.jpg", {
-        type: clothBlob.type || "image/jpeg",
+      const clothFile = new File([clothBlob], 'cloth.jpg', {
+        type: clothBlob.type || 'image/jpeg',
       });
 
-      // 2) Build FormData
       const formData = new FormData();
       formData.append('person', humanFile);
       formData.append('cloth', clothFile);
@@ -103,24 +119,16 @@ export default function Vto() {
 
       const token = localStorage.getItem('token');
       const headers = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      // 3) Call the Express backend /viton endpoint (which calls Replicate)
       const response = await axios.post(
         `http://localhost:3000/viton`,
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            ...headers,
-          },
-          timeout: 300000, // 5 minute timeout for Replicate processing
+          headers: { 'Content-Type': 'multipart/form-data', ...headers },
+          timeout: 300000,
         }
       );
-
-      console.log("Try-on API response:", response.data);
 
       if (response.data.success && response.data.result_url) {
         setResult(response.data.result_url);
@@ -130,13 +138,8 @@ export default function Vto() {
     } catch (err) {
       console.error('Try-on error:', err);
       let errorMsg = 'Virtual try-on failed. Please try again.';
-
-      if (err.response?.data?.message) {
-        errorMsg = err.response.data.message;
-      } else if (err.message) {
-        errorMsg = err.message;
-      }
-
+      if (err.response?.data?.message) errorMsg = err.response.data.message;
+      else if (err.message) errorMsg = err.message;
       setError(errorMsg);
     } finally {
       setLoading(false);
@@ -155,10 +158,7 @@ export default function Vto() {
     }
   };
 
-  const clearResult = () => {
-    setResult(null);
-    setError(null);
-  };
+  const clearResult = () => { setResult(null); setError(null); };
 
   const clearPerson = () => {
     setHumanPreview(null);
@@ -166,790 +166,734 @@ export default function Vto() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  useEffect(() => {
-    if (ImageVto && ImageVto.length > 0) {
-      console.log('Cloth image URL:', ImageVto[0].img || ImageVto[0].imageUrl || ImageVto[0].image);
-    }
-  }, [ImageVto]);
-
   const categories = [
     { value: 'upper_body', label: 'Upper Body', icon: '👔' },
     { value: 'lower_body', label: 'Lower Body', icon: '👖' },
     { value: 'dresses', label: 'Dresses', icon: '👗' },
   ];
 
+  // Filter catalog for shelf — show up to 10 items
+  const shelfProducts = catalogData ? catalogData.slice(0, 10) : [];
+
   return (
-    <div style={styles.pageWrapper}>
-      {/* Animated background elements */}
-      <div style={styles.bgOrb1}></div>
-      <div style={styles.bgOrb2}></div>
-      <div style={styles.bgOrb3}></div>
+    <div style={s.page}>
+      {/* ── Decorative background blobs ── */}
+      <div style={s.blob1} />
+      <div style={s.blob2} />
+      <div style={s.blob3} />
 
-      {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.headerBadge}>
-          <span style={styles.badgeIcon}>✨</span>
-          <span style={styles.badgeText}>AI-Powered</span>
-        </div>
-        <h1 style={styles.title}>Virtual Try-On</h1>
-        <p style={styles.subtitle}>
-          Experience clothes before you buy — powered by IDM-VTON AI
-        </p>
-      </div>
+      <div style={s.container}>
 
-      {/* Category Selector */}
-      <div style={styles.categoryRow}>
-        {categories.map((cat) => (
-          <button
-            key={cat.value}
-            onClick={() => setCategory(cat.value)}
-            style={{
-              ...styles.categoryBtn,
-              ...(category === cat.value ? styles.categoryBtnActive : {}),
-            }}
-          >
-            <span style={styles.categoryIcon}>{cat.icon}</span>
-            <span>{cat.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Progress Bar */}
-      {loading && (
-        <div style={styles.progressContainer}>
-          <div style={{ ...styles.progressBar, width: `${progress}%` }}></div>
-        </div>
-      )}
-
-      {/* Main Grid */}
-      <div style={styles.mainGrid}>
-
-        {/* Person Image Upload */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span style={styles.cardNumber}>1</span>
-            <span style={styles.cardTitle}>Your Photo</span>
-            {humanPreview && (
-              <button onClick={clearPerson} style={styles.clearBtn}>✕</button>
-            )}
+        {/* ── HEADER ── */}
+        <div style={s.header}>
+          <div style={s.badge}>
+            <span style={s.badgeDot}>✦</span>
+            <span style={s.badgeText}>AI-Powered Experience</span>
           </div>
-          <div
-            style={{
-              ...styles.dropZone,
-              ...(dragActive ? styles.dropZoneActive : {}),
-              ...(humanPreview ? styles.dropZoneHasImage : {}),
-            }}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              style={{ display: 'none' }}
-            />
-            {humanPreview ? (
-              <img src={humanPreview} alt="Your Photo" style={styles.previewImage} />
-            ) : (
-              <div style={styles.uploadContent}>
-                <div style={styles.uploadIconWrap}>
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                </div>
-                <p style={styles.uploadTitle}>
-                  {dragActive ? 'Drop your photo here' : 'Upload your photo'}
-                </p>
-                <p style={styles.uploadHint}>Drag & drop or click to browse</p>
-                <p style={styles.uploadTip}>
-                  💡 Clear, front-facing photo works best
-                </p>
-              </div>
-            )}
-          </div>
+          <h1 style={s.title}>
+            Virtual <span style={s.titleGrad}>Try-On</span>
+          </h1>
+          <p style={s.subtitle}>
+            See yourself in any outfit before you buy — powered by IDM‑VTON AI
+          </p>
         </div>
 
-        {/* Cloth Image */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span style={styles.cardNumber}>2</span>
-            <span style={styles.cardTitle}>Selected Garment</span>
+        {/* ── CATEGORY TABS ── */}
+        <div style={s.tabRow}>
+          {categories.map(cat => (
+            <button
+              key={cat.value}
+              onClick={() => setCategory(cat.value)}
+              style={{
+                ...s.tab,
+                ...(category === cat.value ? s.tabActive : {}),
+              }}
+            >
+              <span style={s.tabIcon}>{cat.icon}</span>
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── PROGRESS BAR ── */}
+        {loading && (
+          <div style={s.progressTrack}>
+            <div style={{ ...s.progressFill, width: `${progress}%` }} />
           </div>
-          <div style={{
-            ...styles.dropZone,
-            ...(ImageVto && ImageVto.length > 0 ? styles.dropZoneHasImage : {}),
-            cursor: 'default',
-          }}>
-            {ImageVto && ImageVto.length > 0 ? (
-              <div style={styles.clothPreview}>
-                <img
-                  src={ImageVto[0].img || ImageVto[0].imageUrl || ImageVto[0].image}
-                  alt={ImageVto[0].name || "Selected Cloth"}
-                  style={styles.previewImage}
-                />
-                {ImageVto[0].name && (
-                  <div style={styles.clothLabel}>
-                    {ImageVto[0].name}
+        )}
+
+        {/* ── THREE CARDS ── */}
+        <div style={s.grid}>
+
+          {/* Card 1 – Your Photo */}
+          <div style={s.card}>
+            <div style={s.cardHead}>
+              <span style={s.stepNum}>1</span>
+              <span style={s.cardLabel}>Your Photo</span>
+              {humanPreview && (
+                <button onClick={clearPerson} style={s.iconBtn} title="Remove">✕</button>
+              )}
+            </div>
+            <div
+              style={{
+                ...s.dropZone,
+                ...(dragActive ? s.dropActive : {}),
+                ...(humanPreview ? s.dropFilled : {}),
+              }}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+              />
+              {humanPreview ? (
+                <img src={humanPreview} alt="Your Photo" style={s.previewImg} />
+              ) : (
+                <div style={s.emptyBody}>
+                  <div style={s.uploadIcon}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
                   </div>
-                )}
-              </div>
-            ) : (
-              <div style={styles.uploadContent}>
-                <div style={styles.emptyClothIcon}>👕</div>
-                <p style={styles.uploadTitle}>No garment selected</p>
-                <p style={styles.uploadHint}>
-                  Browse products and click "Try On" on any item
-                </p>
-              </div>
-            )}
+                  <p style={s.emptyTitle}>{dragActive ? 'Drop here!' : 'Upload your photo'}</p>
+                  <p style={s.emptyHint}>Drag & drop or click to browse</p>
+                  <p style={s.emptyTip}>💡 Front‑facing, well‑lit photo works best</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card 2 – Selected Garment */}
+          <div style={s.card}>
+            <div style={s.cardHead}>
+              <span style={s.stepNum}>2</span>
+              <span style={s.cardLabel}>Selected Garment</span>
+              {ImageVto && ImageVto.length > 0 && (
+                <span style={s.garmentBadge}>Selected</span>
+              )}
+            </div>
+            <div style={{
+              ...s.dropZone,
+              ...(ImageVto && ImageVto.length > 0 ? s.dropFilled : {}),
+              cursor: 'default',
+            }}>
+              {ImageVto && ImageVto.length > 0 ? (
+                <div style={s.garmentPreview}>
+                  <img
+                    src={ImageVto[0].img || ImageVto[0].imageUrl || ImageVto[0].image}
+                    alt={ImageVto[0].name || 'Selected Garment'}
+                    style={s.previewImg}
+                  />
+                  {ImageVto[0].name && (
+                    <div style={s.garmentTag}>{ImageVto[0].name}</div>
+                  )}
+                </div>
+              ) : (
+                <div style={s.emptyBody}>
+                  <div style={s.emptyClothIcon}>👕</div>
+                  <p style={s.emptyTitle}>No garment selected</p>
+                  <p style={s.emptyHint}>Pick a product from the shelf below</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card 3 – Result */}
+          <div style={s.card}>
+            <div style={s.cardHead}>
+              <span style={s.stepNum}>3</span>
+              <span style={s.cardLabel}>Result</span>
+              {result && (
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button onClick={handleDownload} style={s.iconBtn} title="Download">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                  </button>
+                  <button onClick={clearResult} style={s.iconBtn} title="Clear">✕</button>
+                </div>
+              )}
+            </div>
+            <div style={{
+              ...s.dropZone,
+              ...(result ? s.dropFilled : {}),
+              cursor: 'default',
+            }}>
+              {loading ? (
+                <div style={s.emptyBody}>
+                  <div style={s.spinner} />
+                  <p style={s.emptyTitle}>AI is working its magic…</p>
+                  <p style={s.emptyHint}>Usually takes 20 – 45 seconds</p>
+                  <div style={s.dotRow}>
+                    <span style={{ ...s.dot, animationDelay: '0s' }}>●</span>
+                    <span style={{ ...s.dot, animationDelay: '0.3s' }}>●</span>
+                    <span style={{ ...s.dot, animationDelay: '0.6s' }}>●</span>
+                  </div>
+                </div>
+              ) : result ? (
+                <img src={result} alt="VTO Result" style={s.previewImg} />
+              ) : (
+                <div style={s.emptyBody}>
+                  <div style={{ ...s.emptyClothIcon, fontSize: '42px' }}>✨</div>
+                  <p style={s.emptyTitle}>Your result appears here</p>
+                  <p style={s.emptyHint}>Upload a photo & select a garment, then hit Try It On</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Result */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span style={styles.cardNumber}>3</span>
-            <span style={styles.cardTitle}>Result</span>
-            {result && (
-              <div style={styles.resultActions}>
-                <button onClick={handleDownload} style={styles.downloadBtn} title="Download">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                </button>
-                <button onClick={clearResult} style={styles.clearBtn}>✕</button>
-              </div>
-            )}
-          </div>
-          <div style={{
-            ...styles.dropZone,
-            ...(result ? styles.dropZoneHasImage : {}),
-            cursor: 'default',
-          }}>
+        {/* ── TRY ON BUTTON ── */}
+        <div style={s.btnRow}>
+          <button
+            onClick={handleTryOn}
+            disabled={loading}
+            style={{ ...s.tryBtn, ...(loading ? s.tryBtnDisabled : {}) }}
+          >
             {loading ? (
-              <div style={styles.loadingContent}>
-                <div style={styles.spinner}></div>
-                <p style={styles.loadingTitle}>AI is working its magic...</p>
-                <p style={styles.loadingHint}>This usually takes 20-45 seconds</p>
-                <div style={styles.loadingDots}>
-                  <span style={{ ...styles.dot, animationDelay: '0s' }}>●</span>
-                  <span style={{ ...styles.dot, animationDelay: '0.3s' }}>●</span>
-                  <span style={{ ...styles.dot, animationDelay: '0.6s' }}>●</span>
+              <>
+                <span style={s.btnSpinner} />
+                Processing…
+              </>
+            ) : (
+              <>
+                <span style={{ fontSize: '20px' }}>🪄</span>
+                Try It On
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* ── ERROR ── */}
+        {error && (
+          <div style={s.errorBox}>
+            <span style={{ fontSize: '16px', flexShrink: 0 }}>⚠️</span>
+            <span style={{ flex: 1 }}>{error}</span>
+            <button onClick={() => setError(null)} style={s.errorClose}>✕</button>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════
+              PRODUCT SHELF — pick a garment
+        ═══════════════════════════════════════════════ */}
+        <div style={s.shelfSection}>
+          <div style={s.shelfHeader}>
+            <div>
+              <h2 style={s.shelfTitle}>Choose a Garment</h2>
+              <p style={s.shelfSubtitle}>Select any product to try it on virtually</p>
+            </div>
+            <div style={s.shelfBadge}>
+              {shelfProducts.length} items
+            </div>
+          </div>
+
+          {shelfProducts.length === 0 ? (
+            <div style={s.shelfEmpty}>
+              <span style={{ fontSize: '40px' }}>🧥</span>
+              <p>No products available yet</p>
+            </div>
+          ) : (
+            <div style={s.shelf}>
+              {shelfProducts.map((product, idx) => {
+                const img = getProductImage(product);
+                const isSelected = selectedGarmentId && (selectedGarmentId === (product._id || product.id));
+                const isHovered = hoveredProduct === (product._id || product.id || idx);
+                return (
+                  <div
+                    key={product._id || product.id || idx}
+                    style={{
+                      ...s.shelfCard,
+                      ...(isSelected ? s.shelfCardSelected : {}),
+                      ...(isHovered && !isSelected ? s.shelfCardHover : {}),
+                    }}
+                    onClick={() => handleSelectGarment(product)}
+                    onMouseEnter={() => setHoveredProduct(product._id || product.id || idx)}
+                    onMouseLeave={() => setHoveredProduct(null)}
+                  >
+                    <div style={s.shelfImgWrap}>
+                      <img
+                        src={img}
+                        alt={product.name || product.title}
+                        style={s.shelfImg}
+                        loading="lazy"
+                      />
+                      {isSelected && (
+                        <div style={s.selectedOverlay}>
+                          <span style={s.selectedCheck}>✓</span>
+                        </div>
+                      )}
+                      {!isSelected && isHovered && (
+                        <div style={s.hoverOverlay}>
+                          <span style={s.hoverLabel}>Select</span>
+                        </div>
+                      )}
+                    </div>
+                    <div style={s.shelfInfo}>
+                      <p style={{
+                        ...s.shelfName,
+                        ...(isSelected ? { color: '#7c3aed' } : {}),
+                      }}>
+                        {(product.name || product.title || 'Product').slice(0, 22)}
+                        {(product.name || product.title || '').length > 22 ? '…' : ''}
+                      </p>
+                      {product.price && (
+                        <p style={s.shelfPrice}>Rs. {product.price.toLocaleString()}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ── TIPS ── */}
+        <div style={s.tipsCard}>
+          <h4 style={s.tipsTitle}>
+            <span>📌</span> Tips for Best Results
+          </h4>
+          <div style={s.tipsGrid}>
+            {[
+              { icon: '📸', label: 'Good Lighting', desc: 'Clear, well-lit environment' },
+              { icon: '🧍', label: 'Front Facing', desc: 'Stand straight facing camera' },
+              { icon: '👕', label: 'Fitted Clothing', desc: 'Wear fitted clothes for accuracy' },
+              { icon: '📐', label: 'Full Body Visible', desc: 'Upper body must be fully seen' },
+            ].map(tip => (
+              <div key={tip.label} style={s.tipItem}>
+                <div style={s.tipIcon}>{tip.icon}</div>
+                <div>
+                  <p style={s.tipLabel}>{tip.label}</p>
+                  <p style={s.tipDesc}>{tip.desc}</p>
                 </div>
               </div>
-            ) : result ? (
-              <img src={result} alt="VTO Result" style={styles.previewImage} />
-            ) : (
-              <div style={styles.uploadContent}>
-                <div style={styles.resultPlaceholderIcon}>✨</div>
-                <p style={styles.uploadTitle}>Try-on result</p>
-                <p style={styles.uploadHint}>Your virtual fitting will appear here</p>
-              </div>
-            )}
+            ))}
           </div>
         </div>
+
       </div>
 
-      {/* Try On Button */}
-      <div style={styles.buttonRow}>
-        <button
-          onClick={handleTryOn}
-          disabled={loading}
-          style={{
-            ...styles.tryOnBtn,
-            ...(loading ? styles.tryOnBtnDisabled : {}),
-          }}
-        >
-          {loading ? (
-            <>
-              <span style={styles.btnSpinner}></span>
-              Processing...
-            </>
-          ) : (
-            <>
-              <span style={styles.btnIcon}>🪄</span>
-              Try It On
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div style={styles.errorBox}>
-          <span style={styles.errorIcon}>⚠️</span>
-          <span>{error}</span>
-          <button onClick={() => setError(null)} style={styles.errorClose}>✕</button>
-        </div>
-      )}
-
-      {/* Tips Section */}
-      <div style={styles.tipsCard}>
-        <h4 style={styles.tipsTitle}>
-          <span>📌</span> Tips for Best Results
-        </h4>
-        <div style={styles.tipsGrid}>
-          <div style={styles.tipItem}>
-            <div style={styles.tipIcon}>📸</div>
-            <div>
-              <p style={styles.tipLabel}>Good Lighting</p>
-              <p style={styles.tipDesc}>Use a clear, well-lit photo</p>
-            </div>
-          </div>
-          <div style={styles.tipItem}>
-            <div style={styles.tipIcon}>🧍</div>
-            <div>
-              <p style={styles.tipLabel}>Front Facing</p>
-              <p style={styles.tipDesc}>Stand straight facing the camera</p>
-            </div>
-          </div>
-          <div style={styles.tipItem}>
-            <div style={styles.tipIcon}>👕</div>
-            <div>
-              <p style={styles.tipLabel}>Fitted Clothing</p>
-              <p style={styles.tipDesc}>Wear fitted clothes for accuracy</p>
-            </div>
-          </div>
-          <div style={styles.tipItem}>
-            <div style={styles.tipIcon}>📐</div>
-            <div>
-              <p style={styles.tipLabel}>Full Visible</p>
-              <p style={styles.tipDesc}>Ensure your upper body is visible</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Inline CSS for animations */}
+      {/* ── Keyframes ── */}
       <style>{`
-        @keyframes float1 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.05); }
-          66% { transform: translate(-20px, 20px) scale(0.95); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap');
+
+        @keyframes vto-spin   { to { transform: rotate(360deg); } }
+        @keyframes vto-dot    { 0%,100%{opacity:.25;transform:scale(.8)} 50%{opacity:1;transform:scale(1.2)} }
+        @keyframes vto-shimmer{ 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+        @keyframes vto-blob1  { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(40px,-30px) scale(1.06)} }
+        @keyframes vto-blob2  { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-30px,40px) scale(.94)} }
+        @keyframes vto-blob3  { 0%,100%{transform:translate(0,0)} 50%{transform:translate(20px,20px)} }
+        @keyframes vto-fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+        .vto-try-btn:hover:not(:disabled) {
+          transform: translateY(-3px);
+          box-shadow: 0 12px 40px rgba(124,58,237,.45) !important;
         }
-        @keyframes float2 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(-40px, 30px) scale(1.1); }
-          66% { transform: translate(20px, -30px) scale(0.9); }
-        }
-        @keyframes float3 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(25px, 25px) scale(1.05); }
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes pulse-dot {
-          0%, 100% { opacity: 0.3; transform: scale(0.8); }
-          50% { opacity: 1; transform: scale(1.2); }
-        }
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+        .vto-try-btn:active:not(:disabled) { transform: translateY(0); }
+        .vto-tab:hover { border-color: rgba(124,58,237,.4) !important; color: #7c3aed !important; }
+        .vto-icon-btn:hover { background: rgba(124,58,237,.1) !important; color: #7c3aed !important; }
+        .vto-shelf-card { transition: transform .28s cubic-bezier(.4,0,.2,1), box-shadow .28s; }
+        .vto-shelf-card:hover { transform: translateY(-5px); }
       `}</style>
     </div>
   );
 }
 
+/* ─────────────────────────────────────────────────────────
+   STYLES — matching Catalog's light purple/pink palette
+───────────────────────────────────────────────────────── */
+const PURPLE   = '#7c3aed';
+const PURPLE_L = '#9333ea';
+const PINK     = '#ec4899';
+const GRAD     = `linear-gradient(135deg, ${PURPLE} 0%, ${PINK} 100%)`;
+const GRAD_SOFT= 'linear-gradient(135deg,#ede9fe 0%,#fce7f3 100%)';
+const TEXT     = '#111827';
+const MUTED    = '#6b7280';
+const BORDER   = 'rgba(229,231,235,.9)';
+const WHITE    = '#ffffff';
+const FONT     = "'Inter', system-ui, -apple-system, sans-serif";
 
-/* ─── Inline Styles ─────────────────────────────────────────────── */
-const styles = {
-  pageWrapper: {
-    position: 'relative',
+const s = {
+  page: {
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 30%, #16213e 60%, #0f0f1a 100%)',
-    padding: '40px 20px 80px',
+    background: 'linear-gradient(160deg,#f5f3ff 0%,#fff 45%,#fdf2f8 100%)',
+    padding: '40px 0 80px',
+    fontFamily: FONT,
     overflow: 'hidden',
-    fontFamily: "'Inter', 'Segoe UI', sans-serif",
+    position: 'relative',
+  },
+  container: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '0 24px',
+    position: 'relative',
+    zIndex: 1,
   },
 
-  // Background orbs
-  bgOrb1: {
-    position: 'absolute',
-    top: '-10%',
-    left: '-5%',
-    width: '400px',
-    height: '400px',
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)',
-    animation: 'float1 20s ease-in-out infinite',
-    pointerEvents: 'none',
+  // Blobs
+  blob1: {
+    position: 'absolute', top: '-8%', left: '-6%',
+    width: '420px', height: '420px', borderRadius: '50%',
+    background: 'radial-gradient(circle,rgba(124,58,237,.12) 0%,transparent 70%)',
+    animation: 'vto-blob1 22s ease-in-out infinite', pointerEvents: 'none',
   },
-  bgOrb2: {
-    position: 'absolute',
-    top: '50%',
-    right: '-10%',
-    width: '500px',
-    height: '500px',
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, transparent 70%)',
-    animation: 'float2 25s ease-in-out infinite',
-    pointerEvents: 'none',
+  blob2: {
+    position: 'absolute', top: '45%', right: '-8%',
+    width: '480px', height: '480px', borderRadius: '50%',
+    background: 'radial-gradient(circle,rgba(236,72,153,.1) 0%,transparent 70%)',
+    animation: 'vto-blob2 26s ease-in-out infinite', pointerEvents: 'none',
   },
-  bgOrb3: {
-    position: 'absolute',
-    bottom: '-5%',
-    left: '30%',
-    width: '350px',
-    height: '350px',
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
-    animation: 'float3 18s ease-in-out infinite',
-    pointerEvents: 'none',
+  blob3: {
+    position: 'absolute', bottom: '5%', left: '32%',
+    width: '320px', height: '320px', borderRadius: '50%',
+    background: 'radial-gradient(circle,rgba(124,58,237,.07) 0%,transparent 70%)',
+    animation: 'vto-blob3 19s ease-in-out infinite', pointerEvents: 'none',
   },
 
   // Header
   header: {
     textAlign: 'center',
-    marginBottom: '32px',
-    position: 'relative',
-    zIndex: 1,
-    animation: 'fadeInUp 0.6s ease-out',
+    padding: '3rem 1rem 2.2rem',
+    animation: 'vto-fadeUp .6s ease-out',
   },
-  headerBadge: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '6px',
-    padding: '6px 16px',
-    borderRadius: '100px',
-    background: 'rgba(139, 92, 246, 0.15)',
-    border: '1px solid rgba(139, 92, 246, 0.3)',
-    marginBottom: '16px',
+  badge: {
+    display: 'inline-flex', alignItems: 'center', gap: '6px',
+    background: GRAD_SOFT, color: PURPLE,
+    fontSize: '0.75rem', fontWeight: 700, letterSpacing: '.08em',
+    textTransform: 'uppercase', padding: '6px 18px',
+    borderRadius: '50px', border: `1px solid rgba(124,58,237,.2)`,
+    marginBottom: '18px',
   },
-  badgeIcon: {
-    fontSize: '14px',
-  },
-  badgeText: {
-    fontSize: '13px',
-    fontWeight: '600',
-    color: '#a78bfa',
-    letterSpacing: '0.5px',
-    textTransform: 'uppercase',
-  },
+  badgeDot: { fontSize: '10px' },
+  badgeText: { fontSize: '12px' },
   title: {
-    fontSize: 'clamp(28px, 4vw, 42px)',
-    fontWeight: '800',
-    background: 'linear-gradient(135deg, #ffffff 0%, #a78bfa 50%, #ec4899 100%)',
+    fontFamily: "'Playfair Display',Georgia,serif",
+    fontSize: 'clamp(2rem,5.5vw,3.2rem)',
+    fontWeight: 900, color: TEXT,
+    lineHeight: 1.12, letterSpacing: '-0.03em',
+    margin: '0 0 12px',
+  },
+  titleGrad: {
+    background: GRAD,
     WebkitBackgroundClip: 'text',
+    backgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
-    marginBottom: '12px',
-    letterSpacing: '-0.5px',
   },
   subtitle: {
-    fontSize: '16px',
-    color: 'rgba(255,255,255,0.5)',
-    maxWidth: '500px',
-    margin: '0 auto',
-    lineHeight: '1.5',
+    fontSize: 'clamp(.9rem,1.5vw,1.05rem)',
+    color: MUTED, maxWidth: '520px', margin: '0 auto',
+    lineHeight: 1.6,
   },
 
-  // Category selector
-  categoryRow: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '12px',
-    marginBottom: '32px',
-    position: 'relative',
-    zIndex: 1,
-    flexWrap: 'wrap',
+  // Category tabs
+  tabRow: {
+    display: 'flex', justifyContent: 'center', gap: '10px',
+    marginBottom: '28px', flexWrap: 'wrap',
   },
-  categoryBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 20px',
-    borderRadius: '12px',
-    border: '1px solid rgba(255,255,255,0.1)',
-    background: 'rgba(255,255,255,0.05)',
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    backdropFilter: 'blur(10px)',
+  tab: {
+    display: 'flex', alignItems: 'center', gap: '8px',
+    padding: '9px 20px', borderRadius: '50px',
+    border: `2px solid ${BORDER}`, background: WHITE,
+    color: MUTED, fontSize: '0.875rem', fontWeight: 600,
+    cursor: 'pointer', transition: 'all .22s',
+    boxShadow: '0 2px 12px rgba(0,0,0,.06)',
+    fontFamily: FONT,
+    className: 'vto-tab',
   },
-  categoryBtnActive: {
-    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.2))',
-    border: '1px solid rgba(139, 92, 246, 0.5)',
-    color: '#ffffff',
-    boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)',
+  tabActive: {
+    background: GRAD, borderColor: 'transparent',
+    color: WHITE, boxShadow: '0 4px 18px rgba(124,58,237,.35)',
   },
-  categoryIcon: {
-    fontSize: '18px',
-  },
+  tabIcon: { fontSize: '17px' },
 
   // Progress bar
-  progressContainer: {
-    maxWidth: '900px',
-    margin: '0 auto 24px',
-    height: '3px',
-    borderRadius: '10px',
-    background: 'rgba(255,255,255,0.05)',
-    overflow: 'hidden',
-    position: 'relative',
-    zIndex: 1,
+  progressTrack: {
+    maxWidth: '860px', margin: '0 auto 20px',
+    height: '3px', borderRadius: '10px',
+    background: 'rgba(124,58,237,.08)', overflow: 'hidden',
   },
-  progressBar: {
-    height: '100%',
-    borderRadius: '10px',
-    background: 'linear-gradient(90deg, #8b5cf6, #ec4899, #8b5cf6)',
+  progressFill: {
+    height: '100%', borderRadius: '10px',
+    background: GRAD,
     backgroundSize: '200% 100%',
-    animation: 'shimmer 2s linear infinite',
-    transition: 'width 0.5s ease',
+    animation: 'vto-shimmer 2s linear infinite',
+    transition: 'width .5s ease',
   },
 
-  // Main grid
-  mainGrid: {
+  // Three-column grid
+  grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '24px',
-    maxWidth: '1100px',
-    margin: '0 auto 32px',
-    position: 'relative',
-    zIndex: 1,
+    gridTemplateColumns: 'repeat(auto-fit,minmax(290px,1fr))',
+    gap: '22px', marginBottom: '28px',
   },
 
   // Card
   card: {
-    background: 'rgba(255,255,255,0.03)',
-    backdropFilter: 'blur(20px)',
-    borderRadius: '20px',
-    border: '1px solid rgba(255,255,255,0.08)',
+    background: WHITE, borderRadius: '18px',
+    border: `1px solid ${BORDER}`,
+    boxShadow: '0 2px 12px rgba(0,0,0,.06)',
     overflow: 'hidden',
-    animation: 'fadeInUp 0.6s ease-out',
+    animation: 'vto-fadeUp .55s ease-out',
   },
-  cardHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '16px 20px',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
+  cardHead: {
+    display: 'flex', alignItems: 'center', gap: '10px',
+    padding: '14px 18px',
+    borderBottom: `1px solid ${BORDER}`,
   },
-  cardNumber: {
-    width: '28px',
-    height: '28px',
-    borderRadius: '8px',
-    background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
-    color: '#fff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '13px',
-    fontWeight: '700',
+  stepNum: {
+    width: '27px', height: '27px', borderRadius: '8px',
+    background: GRAD, color: WHITE,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: '13px', fontWeight: 700, flexShrink: 0,
   },
-  cardTitle: {
-    flex: 1,
-    fontSize: '15px',
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.9)',
+  cardLabel: {
+    flex: 1, fontSize: '15px', fontWeight: 700, color: TEXT,
   },
-  clearBtn: {
-    width: '28px',
-    height: '28px',
-    borderRadius: '8px',
-    border: '1px solid rgba(255,255,255,0.1)',
-    background: 'rgba(255,255,255,0.05)',
-    color: 'rgba(255,255,255,0.5)',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '12px',
-    transition: 'all 0.2s',
+  garmentBadge: {
+    fontSize: '11px', fontWeight: 700, color: PURPLE,
+    background: GRAD_SOFT, border: `1px solid rgba(124,58,237,.2)`,
+    borderRadius: '50px', padding: '3px 10px',
+    textTransform: 'uppercase', letterSpacing: '.06em',
+  },
+  iconBtn: {
+    width: '28px', height: '28px', borderRadius: '8px',
+    border: `1px solid ${BORDER}`, background: 'transparent',
+    color: MUTED, cursor: 'pointer', fontSize: '12px',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    transition: 'all .2s', fontFamily: FONT,
+    className: 'vto-icon-btn',
   },
 
   // Drop zone
   dropZone: {
-    margin: '16px',
-    minHeight: '320px',
-    borderRadius: '16px',
-    border: '2px dashed rgba(255,255,255,0.1)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    position: 'relative',
+    margin: '14px', minHeight: '310px', borderRadius: '14px',
+    border: `2px dashed ${BORDER}`, display: 'flex',
+    alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', transition: 'all .25s',
+    background: 'rgba(245,243,255,.5)',
     overflow: 'hidden',
   },
-  dropZoneActive: {
-    border: '2px dashed rgba(139, 92, 246, 0.6)',
-    background: 'rgba(139, 92, 246, 0.05)',
+  dropActive: {
+    border: `2px dashed ${PURPLE_L}`,
+    background: 'rgba(147,51,234,.05)',
   },
-  dropZoneHasImage: {
-    border: '2px solid rgba(139, 92, 246, 0.2)',
-    background: 'rgba(0,0,0,0.2)',
-  },
-
-  // Preview image
-  previewImage: {
-    maxWidth: '100%',
-    maxHeight: '320px',
-    objectFit: 'contain',
-    borderRadius: '8px',
+  dropFilled: {
+    border: `2px solid rgba(124,58,237,.25)`,
+    background: 'rgba(245,243,255,.8)',
   },
 
-  // Upload content
-  uploadContent: {
-    textAlign: 'center',
-    padding: '32px',
-  },
-  uploadIconWrap: {
-    width: '60px',
-    height: '60px',
-    borderRadius: '16px',
-    background: 'rgba(139, 92, 246, 0.1)',
-    border: '1px solid rgba(139, 92, 246, 0.2)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: '0 auto 16px',
-    color: '#a78bfa',
-  },
-  uploadTitle: {
-    fontSize: '15px',
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.8)',
-    marginBottom: '6px',
-  },
-  uploadHint: {
-    fontSize: '13px',
-    color: 'rgba(255,255,255,0.4)',
-    marginBottom: '12px',
-  },
-  uploadTip: {
-    fontSize: '12px',
-    color: 'rgba(255,255,255,0.3)',
-    background: 'rgba(255,255,255,0.03)',
-    padding: '8px 14px',
-    borderRadius: '8px',
-    display: 'inline-block',
+  previewImg: {
+    maxWidth: '100%', maxHeight: '310px',
+    objectFit: 'contain', borderRadius: '8px',
   },
 
-  // Cloth preview
-  clothPreview: {
-    position: 'relative',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    width: '100%',
-    padding: '10px',
+  // Empty state inside drop zone
+  emptyBody: { textAlign: 'center', padding: '32px 24px' },
+  uploadIcon: {
+    width: '58px', height: '58px', borderRadius: '16px',
+    background: GRAD_SOFT, border: `1px solid rgba(124,58,237,.2)`,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    margin: '0 auto 14px', color: PURPLE,
   },
-  clothLabel: {
-    marginTop: '12px',
-    padding: '6px 14px',
-    borderRadius: '8px',
-    background: 'rgba(139, 92, 246, 0.1)',
-    border: '1px solid rgba(139, 92, 246, 0.2)',
-    color: '#a78bfa',
-    fontSize: '13px',
-    fontWeight: '500',
+  emptyClothIcon: { fontSize: '48px', marginBottom: '12px', opacity: .55 },
+  emptyTitle: { fontSize: '15px', fontWeight: 700, color: TEXT, marginBottom: '6px' },
+  emptyHint: { fontSize: '13px', color: MUTED, marginBottom: '10px' },
+  emptyTip: {
+    fontSize: '12px', color: MUTED,
+    background: GRAD_SOFT, padding: '7px 14px',
+    borderRadius: '8px', display: 'inline-block',
   },
 
-  // Empty cloth
-  emptyClothIcon: {
-    fontSize: '48px',
-    marginBottom: '12px',
-    opacity: 0.5,
+  // Garment preview
+  garmentPreview: {
+    display: 'flex', flexDirection: 'column',
+    alignItems: 'center', padding: '12px', width: '100%',
+  },
+  garmentTag: {
+    marginTop: '10px', padding: '5px 14px', borderRadius: '50px',
+    background: GRAD_SOFT, border: `1px solid rgba(124,58,237,.2)`,
+    color: PURPLE, fontSize: '12px', fontWeight: 600,
+    maxWidth: '90%', textAlign: 'center',
+    overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
   },
 
   // Loading
-  loadingContent: {
-    textAlign: 'center',
-    padding: '32px',
-  },
   spinner: {
-    width: '40px',
-    height: '40px',
-    border: '3px solid rgba(139, 92, 246, 0.1)',
-    borderTopColor: '#8b5cf6',
-    borderRadius: '50%',
-    animation: 'spin 0.8s linear infinite',
-    margin: '0 auto 16px',
+    width: '38px', height: '38px', margin: '0 auto 14px',
+    border: '3px solid rgba(124,58,237,.15)',
+    borderTopColor: PURPLE, borderRadius: '50%',
+    animation: 'vto-spin .8s linear infinite',
   },
-  loadingTitle: {
-    fontSize: '15px',
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.8)',
-    marginBottom: '6px',
-  },
-  loadingHint: {
-    fontSize: '13px',
-    color: 'rgba(255,255,255,0.4)',
-    marginBottom: '16px',
-  },
-  loadingDots: {
-    display: 'flex',
-    gap: '6px',
-    justifyContent: 'center',
-  },
+  dotRow: { display: 'flex', gap: '6px', justifyContent: 'center', marginTop: '12px' },
   dot: {
-    color: '#8b5cf6',
-    fontSize: '10px',
-    animation: 'pulse-dot 1.2s ease-in-out infinite',
-  },
-
-  // Result placeholder
-  resultPlaceholderIcon: {
-    fontSize: '48px',
-    marginBottom: '12px',
-    opacity: 0.5,
-  },
-  resultActions: {
-    display: 'flex',
-    gap: '6px',
-  },
-  downloadBtn: {
-    width: '28px',
-    height: '28px',
-    borderRadius: '8px',
-    border: '1px solid rgba(139, 92, 246, 0.3)',
-    background: 'rgba(139, 92, 246, 0.1)',
-    color: '#a78bfa',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.2s',
+    color: PURPLE, fontSize: '10px',
+    animation: 'vto-dot 1.2s ease-in-out infinite',
   },
 
   // Try On button
-  buttonRow: {
-    display: 'flex',
-    justifyContent: 'center',
-    marginBottom: '32px',
-    position: 'relative',
-    zIndex: 1,
+  btnRow: { display: 'flex', justifyContent: 'center', marginBottom: '24px' },
+  tryBtn: {
+    display: 'flex', alignItems: 'center', gap: '10px',
+    padding: '15px 52px', borderRadius: '50px',
+    border: 'none', background: GRAD, color: WHITE,
+    fontSize: '17px', fontWeight: 700, cursor: 'pointer',
+    transition: 'all .28s ease',
+    boxShadow: '0 8px 28px rgba(124,58,237,.35)',
+    fontFamily: FONT, letterSpacing: '.3px',
+    className: 'vto-try-btn',
   },
-  tryOnBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    padding: '16px 48px',
-    borderRadius: '16px',
-    border: 'none',
-    background: 'linear-gradient(135deg, #8b5cf6, #7c3aed, #6d28d9)',
-    color: '#fff',
-    fontSize: '17px',
-    fontWeight: '700',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    boxShadow: '0 8px 30px rgba(139, 92, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
-    letterSpacing: '0.3px',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  tryOnBtnDisabled: {
-    background: 'rgba(255,255,255,0.1)',
-    boxShadow: 'none',
-    cursor: 'not-allowed',
-    color: 'rgba(255,255,255,0.4)',
-  },
-  btnIcon: {
-    fontSize: '20px',
+  tryBtnDisabled: {
+    background: '#d1d5db', color: '#9ca3af',
+    boxShadow: 'none', cursor: 'not-allowed',
   },
   btnSpinner: {
-    width: '18px',
-    height: '18px',
-    border: '2px solid rgba(255,255,255,0.3)',
-    borderTopColor: '#fff',
-    borderRadius: '50%',
-    animation: 'spin 0.6s linear infinite',
-    display: 'inline-block',
+    width: '18px', height: '18px', display: 'inline-block',
+    border: '2px solid rgba(255,255,255,.3)',
+    borderTopColor: WHITE, borderRadius: '50%',
+    animation: 'vto-spin .6s linear infinite',
   },
 
-  // Error box
+  // Error
   errorBox: {
-    maxWidth: '600px',
-    margin: '0 auto 32px',
-    padding: '14px 20px',
-    borderRadius: '14px',
-    background: 'rgba(239, 68, 68, 0.1)',
-    border: '1px solid rgba(239, 68, 68, 0.2)',
-    color: '#fca5a5',
-    fontSize: '14px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    position: 'relative',
-    zIndex: 1,
-    backdropFilter: 'blur(10px)',
-  },
-  errorIcon: {
-    fontSize: '16px',
-    flexShrink: 0,
+    maxWidth: '700px', margin: '0 auto 28px',
+    padding: '14px 18px', borderRadius: '14px',
+    background: 'rgba(239,68,68,.08)',
+    border: '1px solid rgba(239,68,68,.22)',
+    color: '#b91c1c', fontSize: '14px', fontWeight: 500,
+    display: 'flex', alignItems: 'center', gap: '10px',
   },
   errorClose: {
-    marginLeft: 'auto',
-    background: 'none',
-    border: 'none',
-    color: 'rgba(252, 165, 165, 0.6)',
-    cursor: 'pointer',
-    fontSize: '14px',
-    flexShrink: 0,
+    marginLeft: 'auto', background: 'none', border: 'none',
+    color: '#ef4444', cursor: 'pointer', fontSize: '14px', flexShrink: 0,
+    fontFamily: FONT,
   },
 
-  // Tips card
+  // ═══ PRODUCT SHELF ═══
+  shelfSection: {
+    marginBottom: '40px', padding: '32px',
+    background: WHITE, borderRadius: '24px',
+    border: `1px solid ${BORDER}`,
+    boxShadow: '0 4px 20px rgba(0,0,0,.05)',
+  },
+  shelfHeader: {
+    display: 'flex', alignItems: 'flex-start',
+    justifyContent: 'space-between', flexWrap: 'wrap',
+    gap: '12px', marginBottom: '24px',
+  },
+  shelfTitle: {
+    fontFamily: "'Playfair Display',Georgia,serif",
+    fontSize: 'clamp(1.3rem,3vw,1.7rem)',
+    fontWeight: 800, color: TEXT,
+    margin: '0 0 4px', letterSpacing: '-0.02em',
+  },
+  shelfSubtitle: { fontSize: '14px', color: MUTED, margin: 0 },
+  shelfBadge: {
+    fontSize: '12px', fontWeight: 700, color: PURPLE,
+    background: GRAD_SOFT, border: `1px solid rgba(124,58,237,.2)`,
+    borderRadius: '50px', padding: '5px 14px',
+    alignSelf: 'flex-start',
+  },
+  shelfEmpty: {
+    textAlign: 'center', padding: '40px',
+    color: MUTED, fontSize: '15px',
+  },
+  shelf: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))',
+    gap: '16px',
+  },
+
+  // Shelf card
+  shelfCard: {
+    background: '#fafafa', borderRadius: '14px',
+    border: `1px solid ${BORDER}`,
+    cursor: 'pointer', overflow: 'hidden',
+    transition: 'all .28s cubic-bezier(.4,0,.2,1)',
+    boxShadow: '0 2px 8px rgba(0,0,0,.04)',
+    className: 'vto-shelf-card',
+  },
+  shelfCardHover: {
+    borderColor: `rgba(124,58,237,.35)`,
+    boxShadow: '0 6px 20px rgba(124,58,237,.14)',
+  },
+  shelfCardSelected: {
+    border: `2px solid ${PURPLE}`,
+    boxShadow: '0 6px 24px rgba(124,58,237,.25)',
+    background: GRAD_SOFT,
+  },
+  shelfImgWrap: {
+    position: 'relative', width: '100%', aspectRatio: '3/4',
+    overflow: 'hidden',
+    background: 'linear-gradient(135deg,#f3f0ff,#fce7f3)',
+  },
+  shelfImg: {
+    width: '100%', height: '100%', objectFit: 'cover',
+    transition: 'transform .4s ease',
+  },
+  selectedOverlay: {
+    position: 'absolute', inset: 0,
+    background: 'rgba(124,58,237,.18)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  },
+  selectedCheck: {
+    width: '32px', height: '32px', borderRadius: '50%',
+    background: PURPLE, color: WHITE,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: '16px', fontWeight: 700, boxShadow: '0 4px 12px rgba(124,58,237,.4)',
+  },
+  hoverOverlay: {
+    position: 'absolute', inset: 0,
+    background: 'rgba(124,58,237,.12)',
+    display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+    paddingBottom: '10px',
+  },
+  hoverLabel: {
+    fontSize: '11px', fontWeight: 700, color: WHITE,
+    background: PURPLE, padding: '4px 12px',
+    borderRadius: '50px', letterSpacing: '.06em',
+    textTransform: 'uppercase',
+  },
+  shelfInfo: { padding: '10px 10px 12px' },
+  shelfName: {
+    fontSize: '12px', fontWeight: 600, color: TEXT,
+    margin: '0 0 3px', lineHeight: 1.35,
+  },
+  shelfPrice: {
+    fontSize: '12px', fontWeight: 700,
+    color: PURPLE, margin: 0,
+  },
+
+  // Tips
   tipsCard: {
-    maxWidth: '800px',
-    margin: '0 auto',
-    padding: '28px',
-    borderRadius: '20px',
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.06)',
-    backdropFilter: 'blur(20px)',
-    position: 'relative',
-    zIndex: 1,
+    padding: '28px 30px', borderRadius: '20px',
+    background: WHITE, border: `1px solid ${BORDER}`,
+    boxShadow: '0 2px 12px rgba(0,0,0,.05)',
   },
   tipsTitle: {
-    fontSize: '17px',
-    fontWeight: '700',
-    color: 'rgba(255,255,255,0.9)',
-    marginBottom: '20px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
+    fontSize: '17px', fontWeight: 700, color: TEXT,
+    marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px',
   },
   tipsGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-    gap: '16px',
+    gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))',
+    gap: '14px',
   },
   tipItem: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '12px',
-    padding: '14px',
-    borderRadius: '12px',
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.05)',
+    display: 'flex', alignItems: 'flex-start', gap: '12px',
+    padding: '14px', borderRadius: '12px',
+    background: GRAD_SOFT, border: `1px solid rgba(124,58,237,.12)`,
   },
-  tipIcon: {
-    fontSize: '24px',
-    flexShrink: 0,
-  },
-  tipLabel: {
-    fontSize: '14px',
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.8)',
-    marginBottom: '2px',
-  },
-  tipDesc: {
-    fontSize: '12px',
-    color: 'rgba(255,255,255,0.4)',
-    lineHeight: '1.4',
-  },
+  tipIcon: { fontSize: '22px', flexShrink: 0 },
+  tipLabel: { fontSize: '14px', fontWeight: 700, color: TEXT, marginBottom: '2px' },
+  tipDesc:  { fontSize: '12px', color: MUTED, lineHeight: 1.4 },
 };

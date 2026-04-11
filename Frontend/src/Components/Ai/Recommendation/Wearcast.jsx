@@ -1,6 +1,15 @@
-import { useState, useCallback, useContext, useMemo } from "react";
+import { useState, useCallback, useContext, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  CloudSun,
+  Droplets,
+  ShoppingBag,
+  Sparkles,
+  Wind,
+} from "lucide-react";
 import CartContext from "../../Context/CartContext";
 import "../../../Style/Wearcast.css";
 
@@ -59,14 +68,6 @@ const tagClass = (cat) => {
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-const MetaPill = ({ icon, value }) => (
-  <div className="wc-meta-pill">
-    <span>{icon}</span>
-    {value}
-  </div>
-);
-
-/** Mini product card displayed inside each DayCard */
 const ProductMiniCard = ({ product }) => {
   const imgSrc = product.imageUrl;
   return (
@@ -82,83 +83,6 @@ const ProductMiniCard = ({ product }) => {
         <p className="wc-prod-price">Rs. {(product.price || 0).toLocaleString()}</p>
       </div>
     </Link>
-  );
-};
-
-/** One day card */
-const DayCard = ({ day, index, matchedProducts }) => {
-  const [open, setOpen] = useState(index === 0);
-  const { dayName, dateStr, isToday } = formatDate(day.date);
-
-  return (
-    <div className={`wc-card ${isToday ? "wc-card--today" : ""}`}>
-      {/* Header */}
-      <button className="wc-card-header" onClick={() => setOpen(o => !o)}>
-        <div>
-          <p className={`wc-day-label ${isToday ? "wc-day-label--today" : ""}`}>
-            {isToday ? "— Today —" : dayName}
-          </p>
-          <p className="wc-day-date">{dateStr}</p>
-        </div>
-        <div className="wc-temp-emoji">
-          <div>
-            <span className="wc-temp-max">{Math.round(day.maxTemp)}°</span>
-            <span className="wc-temp-min">/ {Math.round(day.minTemp)}°</span>
-          </div>
-          <span className="wc-emoji">{day.emoji}</span>
-        </div>
-      </button>
-
-      {/* Condition + meta */}
-      <div className="wc-card-meta">
-        <p className="wc-condition">{day.condition}</p>
-        <div className="wc-meta-pills">
-          <MetaPill icon="💨" value={`${Math.round(day.wind)} km/h`} />
-          {day.precipitation > 0 && (
-            <MetaPill icon="💧" value={`${day.precipitation.toFixed(1)} mm`} />
-          )}
-        </div>
-      </div>
-
-      <hr className="wc-card-divider" />
-
-      {/* Clothing suggestions */}
-      <div
-        className="wc-clothes-section"
-        style={{ maxHeight: open ? "700px" : "0px", opacity: open ? 1 : 0 }}
-      >
-        <div className="wc-clothes-inner">
-          <p className="wc-clothes-label">What to wear</p>
-          <div className="wc-clothes-tags">
-            {day.clothes.map((c, i) => (
-              <span key={i} className={tagClass(c.category)}>
-                <span>{c.icon}</span>
-                {c.item}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* DB Products matched to this day's weather */}
-        {matchedProducts.length > 0 && (
-          <div className="wc-products-section">
-            <p className="wc-products-label">Shop for this weather</p>
-            <div className="wc-products-scroll">
-              {matchedProducts.map(prod => (
-                <ProductMiniCard key={prod._id} product={prod} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Toggle hint */}
-      <div className="wc-toggle-hint">
-        <button className="wc-toggle-btn" onClick={() => setOpen(o => !o)}>
-          {open ? "Hide outfit ↑" : "Show outfit ↓"}
-        </button>
-      </div>
-    </div>
   );
 };
 
@@ -211,6 +135,7 @@ export default function WearCast() {
   const [data,    setData]    = useState(null);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   // Pull all products from global context (fetched in CartContext on mount)
   const { productData } = useContext(CartContext);
@@ -235,6 +160,17 @@ export default function WearCast() {
 
   const onKeyDown = (e) => { if (e.key === "Enter") fetchForecast(); };
 
+  useEffect(() => {
+    if (!data?.forecast?.length) {
+      setSelectedIndex(0);
+      return;
+    }
+
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const todayIndex = data.forecast.findIndex((item) => item.date === todayIso);
+    setSelectedIndex(todayIndex >= 0 ? todayIndex : 0);
+  }, [data]);
+
   /**
    * Build a map: day.date → matched products list.
    * Match products whose DB category is in the bucket's category list.
@@ -252,6 +188,18 @@ export default function WearCast() {
     });
     return map;
   }, [data, productData]);
+
+  const selectedDay = data?.forecast?.[selectedIndex] || null;
+  const selectedProducts = selectedDay ? (productsByDay[selectedDay.date] || []) : [];
+
+  const goPrevDay = () => {
+    setSelectedIndex((prev) => Math.max(0, prev - 1));
+  };
+
+  const goNextDay = () => {
+    if (!data?.forecast?.length) return;
+    setSelectedIndex((prev) => Math.min(data.forecast.length - 1, prev + 1));
+  };
 
   return (
     <div className="wc-page">
@@ -299,20 +247,140 @@ export default function WearCast() {
               )}
             </div>
 
+            <section className="wc-day-selector-wrap">
+              <div className="wc-day-selector-head">
+                <p><CalendarDays size={16} /> Select Forecast Day</p>
+                <span>{data.forecast.length} days available</span>
+              </div>
+
+              <div className="wc-day-selector-row">
+                <button
+                  type="button"
+                  className="wc-day-nav"
+                  onClick={goPrevDay}
+                  disabled={selectedIndex === 0}
+                  aria-label="Previous day"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                <div className="wc-day-tabs" role="tablist" aria-label="Forecast days">
+                  {data.forecast.map((day, i) => {
+                    const meta = formatDate(day.date);
+                    return (
+                      <button
+                        type="button"
+                        key={day.date}
+                        className={`wc-day-tab ${i === selectedIndex ? "wc-day-tab--active" : ""}`}
+                        onClick={() => setSelectedIndex(i)}
+                        role="tab"
+                        aria-selected={i === selectedIndex}
+                      >
+                        <span className="wc-day-tab-name">{meta.dayName.slice(0, 3)}</span>
+                        <span className="wc-day-tab-date">{meta.dateStr}</span>
+                        <span className="wc-day-tab-temp">
+                          {Math.round(day.maxTemp)}° / {Math.round(day.minTemp)}°
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  className="wc-day-nav"
+                  onClick={goNextDay}
+                  disabled={selectedIndex === data.forecast.length - 1}
+                  aria-label="Next day"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              <div className="wc-range-wrap">
+                <input
+                  type="range"
+                  min={0}
+                  max={Math.max(0, data.forecast.length - 1)}
+                  value={selectedIndex}
+                  onChange={(e) => setSelectedIndex(Number(e.target.value))}
+                  className="wc-day-range"
+                  aria-label="Day slider"
+                />
+              </div>
+            </section>
+
             {/* Tag legend */}
             <Legend />
 
-            {/* Cards */}
-            <div className="wc-grid">
-              {data.forecast.map((day, i) => (
-                <DayCard
-                  key={day.date}
-                  day={day}
-                  index={i}
-                  matchedProducts={productsByDay[day.date] || []}
-                />
-              ))}
-            </div>
+            {selectedDay && (
+              <section className="wc-focus-layout">
+                <article className="wc-focus-weather">
+                  <div className="wc-focus-top">
+                    <div>
+                      <p className="wc-focus-label">Selected Day</p>
+                      <h3 className="wc-focus-day">{formatDate(selectedDay.date).dayName}</h3>
+                      <p className="wc-focus-date">{formatDate(selectedDay.date).dateStr}</p>
+                    </div>
+                    <span className="wc-focus-emoji">{selectedDay.emoji}</span>
+                  </div>
+
+                  <div className="wc-focus-temp-row">
+                    <p className="wc-focus-temp">{Math.round(selectedDay.maxTemp)}°</p>
+                    <p className="wc-focus-temp-min">Low {Math.round(selectedDay.minTemp)}°</p>
+                  </div>
+
+                  <p className="wc-focus-condition">{selectedDay.condition}</p>
+
+                  <div className="wc-focus-metrics">
+                    <div>
+                      <Wind size={14} />
+                      <span>{Math.round(selectedDay.wind)} km/h</span>
+                    </div>
+                    <div>
+                      <Droplets size={14} />
+                      <span>{selectedDay.precipitation.toFixed(1)} mm</span>
+                    </div>
+                    <div>
+                      <CloudSun size={14} />
+                      <span>{getWeatherBucket(selectedDay.minTemp, selectedDay.maxTemp, selectedDay.code)}</span>
+                    </div>
+                  </div>
+
+                  <div className="wc-focus-outfit">
+                    <p><Sparkles size={14} /> Outfit Guidance</p>
+                    <div className="wc-clothes-tags">
+                      {selectedDay.clothes.map((c, i) => (
+                        <span key={`${c.item}-${i}`} className={tagClass(c.category)}>
+                          <span>{c.icon}</span>
+                          {c.item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </article>
+
+                <article className="wc-focus-products">
+                  <div className="wc-focus-products-head">
+                    <h3>Suggested Products for This Day</h3>
+                    <Link to="/catalog" className="wc-focus-link">View All</Link>
+                  </div>
+
+                  {selectedProducts.length > 0 ? (
+                    <div className="wc-products-grid">
+                      {selectedProducts.map((prod) => (
+                        <ProductMiniCard key={prod._id} product={prod} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="wc-empty-products">
+                      <ShoppingBag size={20} />
+                      <p>No matching products found for this weather. Try another day.</p>
+                    </div>
+                  )}
+                </article>
+              </section>
+            )}
 
             <p className="wc-footer-note">
               Powered by Open-Meteo · Products sourced from our DB · Data updates every hour
