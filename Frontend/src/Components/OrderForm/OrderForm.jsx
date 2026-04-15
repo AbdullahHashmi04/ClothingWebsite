@@ -83,7 +83,7 @@ const OrderForm = () => {
 
       if (res.status === 200) {
         clearCart();
-        navigate("/");
+        navigate("/feedback");
       }
     } catch (error) {
       console.error("Order submission error:", error);

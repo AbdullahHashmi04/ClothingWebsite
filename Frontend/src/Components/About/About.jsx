@@ -23,7 +23,8 @@ const About = () => {
       icon: <Users className="w-8 h-8" />,
       title: "User-Centric Design",
       desc: "Minimal, fast, and responsive UI experience."
-    }
+    },
+  
   ];
 
   return (

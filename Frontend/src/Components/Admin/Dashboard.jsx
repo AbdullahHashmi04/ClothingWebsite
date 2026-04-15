@@ -1,112 +1,172 @@
-import { useEffect, useState } from "react";
-import "../../Style/Admin.css";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { Link } from "lucide-react";
+import "../../Style/Admin.css";
+
+const getStatusClass = (status) => {
+  const key = String(status || "pending").toLowerCase();
+  if (["paid", "delivered", "completed"].includes(key)) return "admin-pill-paid";
+  if (["processing", "confirmed"].includes(key)) return "admin-pill-processing";
+  if (["shipped"].includes(key)) return "admin-pill-shipped";
+  if (["cancelled", "canceled", "failed"].includes(key)) return "admin-pill-danger";
+  return "admin-pill-warn";
+};
+
+const formatCurrency = (value) => `Rs. ${Number(value || 0).toLocaleString()}`;
 
 export default function AdminDashboard() {
-
-  const [cusData, setcusData] = useState([]);
-  const [ordersData, setOrdersData] = useState([]);
-
+  const [customers, setCustomers] = useState([]);
+  const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    const fetch = async () => {
-      let response = await axios("http://localhost:3000/customers/getcustomers");
-      setcusData(response.data);
-    }
-    fetch();
+    const fetchAdminData = async () => {
+      try {
+        const [customersResponse, ordersResponse] = await Promise.all([
+          axios("http://localhost:3000/customers/getcustomers"),
+          axios("http://localhost:3000/orders/getorders"),
+        ]);
+        setCustomers(customersResponse.data || []);
+        setOrders(ordersResponse.data || []);
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+      }
+    };
+
+    fetchAdminData();
   }, []);
 
+  const totalRevenue = useMemo(
+    () => orders.reduce((sum, order) => sum + Number(order.Total || 0), 0),
+    [orders]
+  );
 
-  useEffect(() => {
-    const fetch = async () => {
-      let response = await axios("http://localhost:3000/orders/getorders");
-      setOrdersData(response.data);
-    }
-    fetch();
-  }, []);
+  const pendingOrders = useMemo(
+    () => orders.filter((order) => String(order.Status || "").toLowerCase() === "pending").length,
+    [orders]
+  );
 
+  const recentOrders = useMemo(() => orders.slice(0, 6), [orders]);
+  const recentCustomers = useMemo(() => customers.slice(0, 5), [customers]);
 
   const kpis = [
-    { label: "Revenue", value: "$12,480", delta: "+8.2%" },
-    { label: "Orders", value: ordersData.length, delta: "+3.1%" },
-    { label: "Customers", value: cusData.length, delta: "+5.6%" },
-    { label: "Conversion", value: "2.9%", delta: "+0.4%" },
+    { label: "Revenue", value: formatCurrency(totalRevenue), delta: `${orders.length} orders` },
+    { label: "Orders", value: orders.length, delta: `${pendingOrders} pending` },
+    { label: "Customers", value: customers.length, delta: "Active buyers" },
+    {
+      label: "Avg Order",
+      value: formatCurrency(orders.length ? totalRevenue / orders.length : 0),
+      delta: "Per checkout",
+    },
   ];
 
   return (
     <div className="admin-stack">
+      <section className="admin-overview-hero">
+        <div>
+          <p className="admin-page-kicker">Operations Center</p>
+          <h2 className="admin-overview-title">Store Pulse Dashboard</h2>
+          <p className="admin-overview-text">
+            Monitor sales momentum, order activity, and customer growth from one clean control room.
+          </p>
+        </div>
+        <div className="admin-overview-cta">
+          <button className="admin-primary-btn" type="button" onClick={() => { window.location.href = "/admin/orders"; }}>
+            Review Orders
+          </button>
+          <button className="admin-secondary-btn" type="button" onClick={() => { window.location.href = "/admin/products"; }}>
+            Manage Catalog
+          </button>
+        </div>
+      </section>
+
       <section className="admin-kpi-grid">
-        {kpis.map((k) => (
-          <div key={k.label} className="admin-card">
-            <div className="admin-card-row">
-              <div>
-                <div className="admin-kpi-label">{k.label}</div>
-                <div className="admin-kpi-value">{k.value}</div>
-              </div>
-              <div className="admin-kpi-delta">{k.delta}</div>
-            </div>
+        {kpis.map((kpi) => (
+          <div key={kpi.label} className="admin-card admin-card-pad admin-kpi-card">
+            <div className="admin-kpi-label">{kpi.label}</div>
+            <div className="admin-kpi-value">{kpi.value}</div>
+            <div className="admin-kpi-delta admin-kpi-neutral">{kpi.delta}</div>
           </div>
         ))}
       </section>
 
       <section className="admin-grid-2">
         <div className="admin-card admin-card-pad">
-          <div className="admin-card-title">Recent Orders</div>
-          <div className="admin-table">
-            <div className="admin-table-head">
+          <div className="admin-card-row">
+            <div>
+              <div className="admin-card-title">Recent Orders</div>
+              <div className="admin-muted">Latest checkouts with customer and payment status.</div>
+            </div>
+          </div>
+
+          <div className="admin-table admin-mt">
+            <div className="admin-table-head admin-table-head-dashboard">
               <div>Order</div>
-              <div>Phone</div>
-              <div className="justify-center flex">Status</div>
+              <div>Customer</div>
+              <div>Status</div>
               <div className="admin-right">Total</div>
             </div>
-            {ordersData.slice(0, 6).map((o) => (
-              <div key={o._id} className="admin-table-row">
-                <div className="admin-mono">#{o._id.slice(-7).toUpperCase()}</div>
-                <div className="font-bold">+{o.Phone}</div>
-                    <span style={{
-            padding: "6px 16px", borderRadius: "20px", fontSize: "12px",
-            fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em",
-            background: "#ecfdf5", color: "#059669",
-            border: `1.5px solid #a7f3d0`,
-          }} className="flex justify-center">
-            ● {o.Status}
-          </span>
 
-
-                <div className="flex justify-end font-bold">Rs./ {o.Total}</div>
-                {/* <div> 
-                  <span className={`admin-pill admin-pill-${o.status.toLowerCase()}`}
-                  >
-                    {o.status}
-                  </span>
+            {recentOrders.length ? (
+              recentOrders.map((order) => (
+                <div key={order._id} className="admin-table-row admin-table-row-dashboard">
+                  <div className="admin-mono">#{String(order._id || "").slice(-7).toUpperCase() || "N/A"}</div>
+                  <div>
+                    <div className="admin-strong">{order.FullName || "Unknown"}</div>
+                    <div className="admin-muted">+{order.Phone || "N/A"}</div>
+                  </div>
+                  <div>
+                    <span className={`admin-pill ${getStatusClass(order.Status)}`}>
+                      {order.Status || "Pending"}
+                    </span>
+                  </div>
+                  <div className="admin-right admin-strong">{formatCurrency(order.Total)}</div>
                 </div>
-                <div className="admin-right admin-strong">{o.total}</div> */}
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="admin-empty-state">No orders found yet.</div>
+            )}
           </div>
         </div>
 
-        <div className="admin-card admin-card-pad">
+        <div className="admin-stack">
+          <div className="admin-card admin-card-pad">
+            <div className="admin-card-title">Quick Actions</div>
+            <div className="admin-actions-grid">
+              <button className="admin-action" type="button" onClick={() => { window.location.href = "/admin/discounts"; }}>
+                <div className="admin-action-title">Create Discount</div>
+                <div className="admin-action-sub">Launch a promo campaign</div>
+              </button>
+              <button className="admin-action" type="button" onClick={() => { window.location.href = "/admin/products"; }}>
+                <div className="admin-action-title">Check Inventory</div>
+                <div className="admin-action-sub">Spot low-stock products</div>
+              </button>
+              <button className="admin-action" type="button" onClick={() => { window.location.href = "/admin/customers"; }}>
+                <div className="admin-action-title">Customer Profiles</div>
+                <div className="admin-action-sub">Review buyer details quickly</div>
+              </button>
+              <button className="admin-action" type="button" onClick={() => { window.location.href = "/admin/feedback"; }}>
+                <div className="admin-action-title">Read Feedback</div>
+                <div className="admin-action-sub">Track service quality trends</div>
+              </button>
+            </div>
+          </div>
 
-          <div className="admin-card-title">Quick Actions</div>
-          <div className="admin-actions-grid">
-            <button className="admin-action" type="button" onClick={()=>{ window.location.href="/admin/discounts";}}>
-              <div className="admin-action-title">Create Discount</div>
-              <div className="admin-action-sub">Boost sales with promo codes</div>
-            </button>
-            <button className="admin-action" type="button" onClick={()=>{window.location.href="/admin/products";}}>
-              <div className="admin-action-title">View Low Stock</div>
-              <div className="admin-action-sub">Restock before items run out</div>
-            </button>
-            <button className="admin-action" type="button" onClick={()=>{window.location.href = "/admin/orders";}}>
-              <div className="admin-action-title">Export Orders</div>
-              <div className="admin-action-sub">Download last 30 days report</div>
-            </button>
-            <button className="admin-action" type="button" onClick={()=>{ window.location.href = "/admin/customers";}}>
-              <div className="admin-action-title">Manage Users</div>
-              <div className="admin-action-sub">Control admin access permissions</div>
-            </button>
+          <div className="admin-card admin-card-pad">
+            <div className="admin-card-title">New Customers</div>
+            <div className="admin-list-compact">
+              {recentCustomers.length ? (
+                recentCustomers.map((customer) => (
+                  <div key={customer._id} className="admin-list-item">
+                    <div className="admin-avatar-sm">{String(customer.Username || "U").slice(0, 1).toUpperCase()}</div>
+                    <div>
+                      <div className="admin-strong">{customer.Username || "Unknown User"}</div>
+                      <div className="admin-muted">{customer.Email || "No email"}</div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="admin-empty-state">No customer entries available.</div>
+              )}
+            </div>
           </div>
         </div>
       </section>

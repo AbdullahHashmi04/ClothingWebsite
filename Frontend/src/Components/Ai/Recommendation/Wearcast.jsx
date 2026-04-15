@@ -55,6 +55,11 @@ const formatDate = (iso) => {
   };
 };
 
+const toTitleCase = (value) =>
+  String(value || "")
+    .charAt(0)
+    .toUpperCase() + String(value || "").slice(1);
+
 const tagClass = (cat) => {
   if (cat === "acc")    return "wc-tag wc-tag--acc";
   if (cat === "feet")   return "wc-tag wc-tag--feet";
@@ -191,6 +196,13 @@ export default function WearCast() {
 
   const selectedDay = data?.forecast?.[selectedIndex] || null;
   const selectedProducts = selectedDay ? (productsByDay[selectedDay.date] || []) : [];
+  const selectedBucket = selectedDay
+    ? toTitleCase(getWeatherBucket(selectedDay.minTemp, selectedDay.maxTemp, selectedDay.code))
+    : "";
+
+  const averageHigh = data?.forecast?.length
+    ? Math.round(data.forecast.reduce((sum, day) => sum + Number(day.maxTemp || 0), 0) / data.forecast.length)
+    : null;
 
   const goPrevDay = () => {
     setSelectedIndex((prev) => Math.max(0, prev - 1));
@@ -205,11 +217,33 @@ export default function WearCast() {
     <div className="wc-page">
       {/* ── Hero / Search ─────────────────────── */}
       <section className="wc-hero">
+        <span className="wc-hero-orb wc-hero-orb--left" aria-hidden="true" />
+        <span className="wc-hero-orb wc-hero-orb--right" aria-hidden="true" />
+        <span className="wc-hero-orb wc-hero-orb--center" aria-hidden="true" />
+
         <div className="wc-hero-badge">☀️ AI Weather Stylist</div>
         <h1 className="wc-hero-title">
-          Wear<em>Cast</em>
+          Forecast Your <em>Fit</em>
         </h1>
-        <p className="wc-hero-sub">Your 7-day outfit & product planner</p>
+        <p className="wc-hero-sub">WearCast</p>
+        <p className="wc-hero-copy">
+          A weather-first styling board inspired by your trending experience: outfit layers, conditions, and curated catalog picks in one clean flow.
+        </p>
+
+        <div className="wc-hero-stats" aria-label="Wearcast highlights">
+          <div className="wc-hero-stat">
+            <strong>7</strong>
+            <span>Day Forecast</span>
+          </div>
+          <div className="wc-hero-stat">
+            <strong>AI</strong>
+            <span>Outfit Layers</span>
+          </div>
+          <div className="wc-hero-stat">
+            <strong>Live</strong>
+            <span>Catalog Match</span>
+          </div>
+        </div>
 
         <div className="wc-search-wrap">
           <input
@@ -247,6 +281,21 @@ export default function WearCast() {
               )}
             </div>
 
+            <div className="wc-overview-row">
+              <div className="wc-overview-pill">
+                <span>Forecast Days</span>
+                <strong>{data.forecast.length}</strong>
+              </div>
+              <div className="wc-overview-pill">
+                <span>Average High</span>
+                <strong>{averageHigh !== null ? `${averageHigh}°` : "-"}</strong>
+              </div>
+              <div className="wc-overview-pill">
+                <span>Matched Products</span>
+                <strong>{selectedProducts.length}</strong>
+              </div>
+            </div>
+
             <section className="wc-day-selector-wrap">
               <div className="wc-day-selector-head">
                 <p><CalendarDays size={16} /> Select Forecast Day</p>
@@ -271,7 +320,7 @@ export default function WearCast() {
                       <button
                         type="button"
                         key={day.date}
-                        className={`wc-day-tab ${i === selectedIndex ? "wc-day-tab--active" : ""}`}
+                        className={`wc-day-tab ${i === selectedIndex ? "wc-day-tab--active" : ""} ${meta.isToday ? "wc-day-tab--today" : ""}`}
                         onClick={() => setSelectedIndex(i)}
                         role="tab"
                         aria-selected={i === selectedIndex}
@@ -343,7 +392,7 @@ export default function WearCast() {
                     </div>
                     <div>
                       <CloudSun size={14} />
-                      <span>{getWeatherBucket(selectedDay.minTemp, selectedDay.maxTemp, selectedDay.code)}</span>
+                      <span>{selectedBucket}</span>
                     </div>
                   </div>
 

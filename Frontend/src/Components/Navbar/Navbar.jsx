@@ -132,9 +132,9 @@ function UserDropdown() {
             <div style={{ fontSize: "13px", fontWeight: "500", fontFamily: "'DM Sans',sans-serif", color: "#1a1410", letterSpacing: "0.01em" }}>
               {user.Username}
             </div>
-            {/* <div style={{ fontSize: "11px", color: "#b8a070", fontFamily: "'DM Sans',sans-serif", marginTop: "2px" }}>
+            <div style={{ fontSize: "11px", color: "#b8a070", fontFamily: "'DM Sans',sans-serif", marginTop: "2px" }}>
               {user.role}
-            </div> */}
+            </div>
           </div>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a8060" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
             style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease", marginLeft: "1px" }}>
@@ -168,9 +168,14 @@ function UserDropdown() {
             </div>
 
             <ul role="presentation" style={{ listStyle: "none", margin: 0, padding: "6px 0" }}>
+             
+              {console.log(user.role)}
+              {user.role == "user" ? 
               <Link to='/userDashboard'>
                 <MenuItem icon={<ProfileIcon />} label="Profile" onClick={() => setOpen(false)} index={0} />
-              </Link>
+              </Link> :      <Link to='/admin'>
+                <MenuItem icon={<ProfileIcon />} label="Profile" onClick={() => setOpen(false)} index={0} />
+              </Link>      }
             </ul>
 
             <div style={{ height: "1px", background: "rgba(200,168,75,0.12)", margin: "2px 14px" }} />
@@ -207,7 +212,6 @@ export default function Navbar() {
   const navLinks = [
     { path: "/", label: "Home" },
     { path: "/catalog", label: "Catalog" },
-    // { path: "/about", label: "About" },
     { path: "/trending", label: "Trending" },
     { path: "/wearcast", label: "WearCast" }
   ];
@@ -300,18 +304,6 @@ export default function Navbar() {
 
                   </button>
                 </Link>
-                {/* <button className="w-30 h-9 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl
-         font-semibold hover:from-purple-700 hover:to-pink-700
-         transition-all duration-200 transform hover:scale-105 shadow-lg disabled:opacity-50 
-         disabled:cursor-not-allowed"
-                  onClick={() =>
-                    logout({
-                      logoutParams: { returnTo: window.location.origin },
-                    })
-                  }
-                >
-                  Log Out
-                </button> */}
               </div>
             )}
 

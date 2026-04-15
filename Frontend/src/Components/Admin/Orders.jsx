@@ -2,346 +2,92 @@ import { useState, useEffect } from "react";
 import "../../Style/Admin.css";
 import axios from "axios";
 
+const getStatusClass = (status) => {
+  const key = String(status || "pending").toLowerCase();
+  if (["paid", "completed", "delivered"].includes(key)) return "admin-pill-paid";
+  if (["processing", "confirmed"].includes(key)) return "admin-pill-processing";
+  if (["shipped"].includes(key)) return "admin-pill-shipped";
+  if (["cancelled", "canceled", "failed"].includes(key)) return "admin-pill-danger";
+  return "admin-pill-warn";
+};
+
 function Modal({ onClose, editData }) {
-  const [form, setForm] = useState(editData);
+  if (!editData) return null;
 
-  const statusColor = {
-    paid: { bg: "#ecfdf5", text: "#059669", border: "#a7f3d0" },
-    pending: { bg: "#fffbeb", text: "#d97706", border: "#fde68a" },
-    cancelled: { bg: "#fef2f2", text: "#dc2626", border: "#fecaca" },
-  };
-
-  const currentStatus =
-    statusColor[form.Status?.toLowerCase()] || statusColor.pending;
+  const cartItems = Array.isArray(editData.cart) ? editData.cart : [];
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1000,
-        background: "rgba(26,10,46,0.35)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: "20px",
-          width: "100%",
-          maxWidth: "720px",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          padding: "32px",
-          boxShadow: "0 24px 60px rgba(147,51,234,0.18)",
-          fontFamily: "'DM Sans',sans-serif",
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "24px",
-          }}
-        >
+    <div className="admin-modal-overlay">
+      <div className="admin-modal-card admin-modal-card-lg">
+        <div className="admin-modal-header">
           <div>
-            <h2
-              style={{
-                margin: 0,
-                fontSize: "20px",
-                fontWeight: 700,
-                color: "#1a0a2e",
-              }}
-            >
-              Order Details
-            </h2>
-            <p
-              style={{
-                margin: "4px 0 0",
-                fontSize: "12.5px",
-                color: "#9ca3af",
-              }}
-            >
-              Order #{form._id?.slice(-8).toUpperCase()}
-            </p>
+            <h2 className="admin-modal-title">Order Details</h2>
+            <p className="admin-modal-subtitle">Order #{String(editData._id || "").slice(-8).toUpperCase() || "N/A"}</p>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              width: "34px",
-              height: "34px",
-              borderRadius: "50%",
-              border: "1.5px solid #e9d5ff",
-              background: "#faf5ff",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "16px",
-              color: "#9333ea",
-            }}
-          >
+          <button className="admin-modal-close" onClick={onClose} type="button" aria-label="Close modal">
             ×
           </button>
         </div>
 
-        {/* Status & Date Row */}
-        <div
-          style={{
-            display: "flex",
-            gap: "12px",
-            marginBottom: "20px",
-            flexWrap: "wrap",
-          }}
-        >
-          <span
-            style={{
-              padding: "6px 16px",
-              borderRadius: "20px",
-              fontSize: "12px",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              background: currentStatus.bg,
-              color: currentStatus.text,
-              border: `1.5px solid ${currentStatus.border}`,
-            }}
-          >
-            ● {form.Status}
+        <div className="admin-inline admin-modal-meta">
+          <span className={`admin-pill ${getStatusClass(editData.Status)}`}>
+            {editData.Status || "Pending"}
           </span>
-          <span
-            style={{
-              padding: "6px 16px",
-              borderRadius: "20px",
-              fontSize: "12px",
-              fontWeight: 600,
-              background: "#f3f4f6",
-              color: "#6b7280",
-              border: "1.5px solid #e5e7eb",
-            }}
-          >
-            📅 {form.date}
-          </span>
-
-          <span
-            style={{
-              width: "66px",
-              height: "36px",
-              borderRadius: "10px",
-              background: "var(--brand-gradient)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
-              fontSize: "13px",
-              fontWeight: 700,
-              flexShrink: 0,
-              boxShadow: "0 2px 8px rgba(147,51,234,0.25)",
-            }}
-          >
-            <button onClick={()=>{window.location.href = `https://wa.me/${form.Phone}`;}}>Contact</button>
-          </span>
+          <span className="admin-pill">{editData.date || "No date"}</span>
+          <a className="admin-secondary-btn" href={`https://wa.me/${editData.Phone || ""}`} target="_blank" rel="noreferrer">
+            Contact
+          </a>
         </div>
 
-        {/* Customer Information */}
-        <div
-          style={{
-            background: "#faf5ff",
-            borderRadius: "14px",
-            padding: "20px",
-            border: "1.5px solid #e9d5ff",
-            marginBottom: "20px",
-          }}
-        >
-          <h3
-            style={{
-              margin: "0 0 16px",
-              fontSize: "13px",
-              fontWeight: 700,
-              color: "#7c3aed",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-            }}
-          >
-            Customer Information
-          </h3>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "16px",
-            }}
-          >
-            {[
-              { icon: "👤", label: "Full Name", value: form.FullName },
-              { icon: "📧", label: "Email", value: form.Email },
-              { icon: "📞", label: "Phone", value: `+${form.Phone}` },
-              { icon: "📍", label: "Address", value: form.Address },
-            ].map((item, i) => (
-              <div
-                key={i}
-                style={{
-                  background: "#fff",
-                  borderRadius: "10px",
-                  padding: "12px 14px",
-                  border: "1px solid #ede9fe",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "11px",
-                    color: "#9ca3af",
-                    fontWeight: 600,
-                    marginBottom: "4px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  {item.icon} {item.label}
-                </div>
-                <div
-                  style={{
-                    fontSize: "13.5px",
-                    fontWeight: 600,
-                    color: "#1a0a2e",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  {item.value}
-                </div>
-              </div>
-            ))}
+        <div className="admin-modal-section">
+          <h3 className="admin-section-title">Customer Information</h3>
+          <div className="admin-info-grid">
+            <div className="admin-info-card">
+              <div className="admin-info-label">Full Name</div>
+              <div className="admin-info-value">{editData.FullName || "Unknown"}</div>
+            </div>
+            <div className="admin-info-card">
+              <div className="admin-info-label">Email</div>
+              <div className="admin-info-value">{editData.Email || "No email"}</div>
+            </div>
+            <div className="admin-info-card">
+              <div className="admin-info-label">Phone</div>
+              <div className="admin-info-value">+{editData.Phone || "N/A"}</div>
+            </div>
+            <div className="admin-info-card">
+              <div className="admin-info-label">Address</div>
+              <div className="admin-info-value">{editData.Address || "Not provided"}</div>
+            </div>
           </div>
         </div>
 
-        {/* Cart Items */}
-        <div
-          style={{
-            background: "#f8fafc",
-            borderRadius: "14px",
-            padding: "20px",
-            border: "1.5px solid #e2e8f0",
-            marginBottom: "20px",
-          }}
-        >
-          <h3
-            style={{
-              margin: "0 0 16px",
-              fontSize: "13px",
-              fontWeight: 700,
-              color: "#7c3aed",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-            }}
-          >
-            Items Ordered ({form.cart?.length || 0})
-          </h3>
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
-          >
-            {form.cart?.map((item, index) => (
-              <div
-                key={item._id || index}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "14px",
-                  background: "#fff",
-                  borderRadius: "10px",
-                  padding: "12px 16px",
-                  border: "1px solid #e2e8f0",
-                  transition: "border-color 0.2s",
-                }}
-              >
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "10px",
-                    background: "var(--brand-gradient)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#fff",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    flexShrink: 0,
-                    boxShadow: "0 2px 8px rgba(147,51,234,0.25)",
-                  }}
-                >
-                  {index + 1}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: "13.5px",
-                      fontWeight: 600,
-                      color: "#1a0a2e",
-                    }}
-                  >
-                    {item.name}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "11px",
-                      color: "#9ca3af",
-                      fontFamily: "monospace",
-                      marginTop: "2px",
-                    }}
-                  >
-                    ID: {item._id}
+        <div className="admin-modal-section">
+          <h3 className="admin-section-title">Items Ordered ({cartItems.length})</h3>
+          <div className="admin-stack">
+            {cartItems.length ? (
+              cartItems.map((item, index) => (
+                <div key={item._id || index} className="admin-order-item">
+                  <div className="admin-order-item-index">{index + 1}</div>
+                  <div>
+                    <div className="admin-strong">{item.name || "Unnamed Item"}</div>
+                    <div className="admin-muted admin-xs">ID: {item._id || "N/A"}</div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="admin-empty-state">No cart items available for this order.</div>
+            )}
           </div>
         </div>
 
-        {/* Order Total */}
-        <div
-          style={{
-            background: "var(--brand-gradient)",
-            borderRadius: "14px",
-            padding: "20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 4px 14px rgba(147,51,234,0.3)",
-          }}
-        >
+        <div className="admin-total-panel">
           <div>
-            <div
-              style={{
-                fontSize: "12px",
-                color: "#e9d5ff",
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-              }}
-            >
-              Order Total
-            </div>
-            <div
-              style={{ fontSize: "12px", color: "#c4b5fd", marginTop: "2px" }}
-            >
-              {form.cart?.length || 0} item{form.cart?.length > 1 ? "s" : ""}
+            <div className="admin-total-label">Order Total</div>
+            <div className="admin-total-subtext">
+              {cartItems.length} item{cartItems.length > 1 ? "s" : ""}
             </div>
           </div>
-          <div
-            style={{
-              fontSize: "28px",
-              fontWeight: 800,
-              color: "#fff",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Rs. {form.Total?.toLocaleString()}
-          </div>
+          <div className="admin-total-value">Rs. {Number(editData.Total || 0).toLocaleString()}</div>
         </div>
       </div>
     </div>
@@ -352,6 +98,13 @@ export default function AdminOrders() {
   const [ordersData, setOrdersData] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
+
+  const pendingOrders = ordersData.filter(
+    (order) => String(order.Status || "").toLowerCase() === "pending"
+  ).length;
+  const completedOrders = ordersData.filter((order) =>
+    ["paid", "completed", "delivered"].includes(String(order.Status || "").toLowerCase())
+  ).length;
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -387,53 +140,72 @@ export default function AdminOrders() {
           editData={editItem}
         />
       )}
+
+      <section className="admin-page-header">
+        <div>
+          <p className="admin-page-kicker">Fulfillment Desk</p>
+          <h2 className="admin-page-title">Orders</h2>
+          <p className="admin-page-subtitle">Track payment status, buyers, and fulfillment progress in real time.</p>
+        </div>
+      </section>
+
+      <section className="admin-summary-strip">
+        <article className="admin-summary-item">
+          <div className="admin-summary-label">Total Orders</div>
+          <div className="admin-summary-value">{ordersData.length}</div>
+        </article>
+        <article className="admin-summary-item">
+          <div className="admin-summary-label">Pending</div>
+          <div className="admin-summary-value">{pendingOrders}</div>
+        </article>
+        <article className="admin-summary-item">
+          <div className="admin-summary-label">Completed</div>
+          <div className="admin-summary-value">{completedOrders}</div>
+        </article>
+      </section>
+
       <div className="admin-card admin-card-pad">
         <div className="admin-card-row">
           <div>
-            <div className="admin-card-title">Orders</div>
-            <div className="admin-muted">
-              Track fulfillment and payment status.
-            </div>
+            <div className="admin-card-title">Order Queue</div>
+            <div className="admin-muted">Review order details, contact customers, and remove invalid entries.</div>
           </div>
         </div>
 
         <div className="admin-table admin-mt">
-          <div className="admin-table-head">
+          <div className="admin-table-head admin-table-head-orders">
             <div>Order</div>
             <div>Date</div>
             <div>Customer</div>
-            <div className="justify-end">Actions</div>
+            <div>Status</div>
+            <div className="admin-right">Total</div>
+            <div className="admin-right">Actions</div>
           </div>
           {ordersData.length > 0 ? (
             ordersData.map((o, index) => (
               <div
                 key={o._id?.toString() || `order-${index}`}
-                className="admin-table-row"
+                className="admin-table-row admin-table-row-orders"
               >
-                <div className="admin-mono">
-                  #{o._id.slice(-7).toUpperCase()}
-                </div>
+                <div className="admin-mono">#{String(o._id || "").slice(-7).toUpperCase() || "N/A"}</div>
                 <div className="admin-mono">{o.date}</div>
-                <div className="admin-strong">{o.FullName}</div>
-                <div className="flex gap-2">
-                  {/* View Details */}
+                <div>
+                  <div className="admin-strong">{o.FullName || "Unknown"}</div>
+                  <div className="admin-muted">{o.Email || "No email"}</div>
+                </div>
+                <div>
+                  <span className={`admin-pill ${getStatusClass(o.Status)}`}>{o.Status || "Pending"}</span>
+                </div>
+                <div className="admin-right admin-strong">Rs. {Number(o.Total || 0).toLocaleString()}</div>
+                <div className="admin-actions-right">
                   <button
                     onClick={() => {
                       setEditItem(o);
                       setShowModal(true);
                     }}
                     title="View Details"
-                    style={{
-                      width: "32px",
-                      height: "32px",
-                      borderRadius: "8px",
-                      border: "1.5px solid #e9d5ff",
-                      background: "#faf5ff",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
+                    className="admin-icon-btn"
+                    type="button"
                   >
                     <svg
                       width="13"
@@ -450,21 +222,11 @@ export default function AdminOrders() {
                     </svg>
                   </button>
 
-                  {/* Delete */}
                   <button
                     onClick={() => handleDelete(o._id)}
                     title="Delete"
-                    style={{
-                      width: "32px",
-                      height: "32px",
-                      borderRadius: "8px",
-                      border: "1.5px solid #ffe4e6",
-                      background: "#fff5f7",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
+                    className="admin-icon-btn admin-icon-btn-danger"
+                    type="button"
                   >
                     <svg
                       width="13"
@@ -487,7 +249,7 @@ export default function AdminOrders() {
               </div>
             ))
           ) : (
-            <div>No orders available</div>
+            <div className="admin-empty-state">No orders available</div>
           )}
         </div>
       </div>

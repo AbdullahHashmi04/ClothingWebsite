@@ -15,7 +15,6 @@ router.post("/createOrder", (req, res) => {
     // console.log(req.body.data)
     const Status = "paid"
     const query = new OrderDetails({ ...req.body.data, date, Status });
-    console.log("Order received: ", query);
     query.save()
     res.status(200)
     res.send("Successful")
@@ -77,7 +76,6 @@ router.get('/getUserOrdersforChatbot/:id', async (req, res) => {
 
         // Fetch all orders and filter by last 6 chars of _id
         const allOrders = await OrderDetails.find({});
-        console.log("All orders fetched for chatbot tracking:", allOrders);
         const orders = allOrders.filter(order =>
             order._id.toString().slice(-6).toLowerCase() === shortId
         );
