@@ -42,8 +42,8 @@ function SignUp() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.15 }}
-          className="w-full max-w-md"
-          style={{ maxWidth: '440px' }}
+          className="w-full  max-w-md"
+          style={{ maxWidth: '500px' }}
         >
           {/* Header */}
           <div className="text-center mb-8">

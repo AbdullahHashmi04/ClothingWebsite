@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext, useRef } from "react";
 import {
   ChevronLeft, ChevronRight, ShoppingBag, Sparkles,
-  TrendingUp, Heart, Star, Award, Truck, Shield,
+  TrendingUp, Heart, Star, Award, Truck, Shield,Shirt,
   RefreshCw, Users, CheckCircle, ArrowRight, Zap, Gift,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -63,6 +63,13 @@ export default function HeroSlider() {
   const setCatalog = (data) => {
     setCategory(data);
   };
+  const items = [
+  { icon: Truck,     title: "Free Shipping",   desc: "On orders over $50" },
+  { icon: Shield,    title: "Secure Payment",  desc: "100% secure transactions" },
+  { icon: RefreshCw, title: "Easy Returns",    desc: "30-day return policy" },
+  { icon: Award,     title: "Premium Quality", desc: "Curated by experts" },
+  { icon: Shirt,     title: "Virtual Try On",  desc: "Curated by experts" },
+];
 
 
   const addToWishlist = async (item) => {
@@ -456,7 +463,7 @@ export default function HeroSlider() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <div className="why-choose-header">
+            <div className="why-choose-header "style={{ overflow: "hidden" }}>
               <h2 className="why-choose-title">
                 Why Choose {" "}
                 <span className="why-choose-title-gradient">Smartify</span>?
@@ -465,29 +472,8 @@ export default function HeroSlider() {
                 Experience the difference with our premium services
               </p>
             </div>
-            <div className="why-choose-grid">
-              {[
-                {
-                  icon: Truck,
-                  title: "Free Shipping",
-                  desc: "On orders over $50",
-                },
-                {
-                  icon: Shield,
-                  title: "Secure Payment",
-                  desc: "100% secure transactions",
-                },
-                {
-                  icon: RefreshCw,
-                  title: "Easy Returns",
-                  desc: "30-day return policy",
-                },
-                {
-                  icon: Award,
-                  title: "Premium Quality",
-                  desc: "Curated by experts",
-                },
-              ].map((item, idx) => (
+             <div className="marquee-track">
+              {[...items, ...items].map((item, idx) => (
                 <motion.div
                   key={idx}
                   initial={{ opacity: 0, y: 20 }}
@@ -497,43 +483,12 @@ export default function HeroSlider() {
                   className="why-choose-card"
                 >
                   <div className="why-choose-icon-wrapper">
-                    <item.icon className="why-choose-icon" />
+                    <item.icon className="why-choose-icon"   /  >
                   </div>
                   <h3 className="why-choose-card-title">{item.title}</h3>
                   <p className="why-choose-card-desc">{item.desc}</p>
                 </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      <section className="stats-section">
-        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <div className="stats-grid">
-              {[
-                { number: "50K+", label: "Happy Customers" },
-                { number: "10K+", label: "Products" },
-                { number: "500+", label: "5-Star Reviews" },
-                { number: "24/7", label: "Support" },
-              ].map((stat, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="stats-item"
-                >
-                  <div className="stats-number">{stat.number}</div>
-                  <div className="stats-label">{stat.label}</div>
-                </motion.div>
-              ))}
+                ))}
             </div>
           </motion.div>
         </div>

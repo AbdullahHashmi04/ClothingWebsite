@@ -10,6 +10,21 @@
   padding: 4rem 0;
   background: white;
 }
+.marquee-track {
+  display: flex;          /* overrides grid */
+  gap: 40px;
+  width: max-content;     /* critical — don't skip this */
+  animation: scroll-left 6s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes scroll-left {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }  /* -50% because array is doubled */
+}
 
 .why-choose-header {
   text-align: center;
