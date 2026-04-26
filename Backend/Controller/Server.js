@@ -78,6 +78,16 @@ app.use("/viton", Viton);
 app.use('/Feedback', Feedback)
 app.use('/Complaints', ComplaintRoute)
 
+process.on('uncaughtException', (error) => {
+  console.log('Uncaught Exception:', error.message)
+  console.log(error.stack)
+})
+
+process.on('unhandledRejection', (error) => {
+  console.log('Unhandled Rejection:', error.message)
+  console.log(error.stack)
+})
+
 
 
 // 404 handler
