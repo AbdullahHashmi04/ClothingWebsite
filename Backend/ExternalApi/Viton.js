@@ -1,5 +1,4 @@
 import express from "express";
-import multer from "multer";
 import Replicate from "replicate";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
@@ -10,20 +9,48 @@ const __dirname = dirname(__filename);
 dotenv.config({ path: join(__dirname, "../.env") });
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+import { upload } from '../Config/cloudinary.js'
 
 // Initialize Replicate client using env token
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
 });
 
+function bufferToDataURI(buffer, mimeType = "image/jpeg") {
+  const base64 = buffer.toString("base64");
+  return `data:${mimeType};base64,${base64}`;
+}
+
 /**
- * Convert a multer file buffer to a base64 data URI
- * Replicate accepts data URIs for image inputs
+ * Build a Replicate-compatible image input from multer file object.
+ * Supports both:
+ * 1) Cloudinary storage (file.path / file.secure_url / file.url)
+ * 2) Memory/disk uploads with file.buffer
  */
-function bufferToDataURI(file) {
-  const base64 = file.buffer.toString("base64");
-  return `data:${file.mimetype};base64,${base64}`;
+function fileToReplicateInput(file, label) {
+  if (!file) {
+    throw new Error(`${label} image file is missing`);
+  }
+
+  if (typeof file.path === "string" && /^https?:\/\//i.test(file.path)) {
+    return file.path;
+  }
+
+  if (typeof file.secure_url === "string" && /^https?:\/\//i.test(file.secure_url)) {
+    return file.secure_url;
+  }
+
+  if (typeof file.url === "string" && /^https?:\/\//i.test(file.url)) {
+    return file.url;
+  }
+
+  if (file.buffer && Buffer.isBuffer(file.buffer)) {
+    return bufferToDataURI(file.buffer, file.mimetype || "image/jpeg");
+  }
+
+  throw new Error(
+    `${label} image has no usable source. Expected Cloudinary URL or file buffer.`
+  );
 }
 
 router.post(
@@ -47,13 +74,13 @@ router.post(
         });
       }
 
-      // Convert buffers to data URIs for Replicate
-      const humanImgURI = bufferToDataURI(personFile);
-      const garmImgURI = bufferToDataURI(clothFile);
+      // Convert upload objects to Replicate image inputs (URL or data URI)
+      const humanImgURI = fileToReplicateInput(personFile, "Person");
+      const garmImgURI = fileToReplicateInput(clothFile, "Cloth");
 
       console.log("🔄 Sending images to Replicate IDM-VTON...");
-      console.log(`   Person image size: ${personFile.size} bytes`);
-      console.log(`   Cloth image size:  ${clothFile.size} bytes`);
+      console.log(`   Person image size: ${personFile.size ?? "unknown"} bytes`);
+      console.log(`   Cloth image size:  ${clothFile.size ?? "unknown"} bytes`);
       console.log(`   Category: ${category}`);
 
       // Run the IDM-VTON model on Replicate
