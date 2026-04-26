@@ -2,6 +2,44 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+.home-page {
+  background: #ffffff;
+}
+
+.home-shell {
+  width: min(1240px, calc(100% - 2.5rem));
+  margin-inline: auto;
+}
+
+.home-section {
+  padding-block: clamp(2.75rem, 6vw, 5rem);
+}
+
+.featured-products-section {
+  padding-top: clamp(3.2rem, 6vw, 5.2rem) !important;
+  padding-bottom: clamp(3.2rem, 6vw, 5.2rem) !important;
+}
+
+.featured-products-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2.75rem;
+}
+
+@media (min-width: 640px) {
+  .featured-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .featured-products-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.4rem;
+  }
+}
+
 /* ============================================
    WHY CHOOSE US SECTION
    ============================================ */
@@ -12,9 +50,73 @@
 }
 .marquee-track {
   display: flex;          /* overrides grid */
-  gap: 40px;
+  gap: 24px;
   width: max-content;     /* critical — don't skip this */
-  animation: scroll-left 6s linear infinite;
+  animation: scroll-left 22s linear infinite;
+}
+
+.why-choose-marquee-viewport {
+  position: relative;
+  overflow: hidden;
+  padding: 0.25rem 0 0.5rem;
+}
+
+.why-choose-marquee-viewport::before,
+.why-choose-marquee-viewport::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 56px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.why-choose-marquee-viewport::before {
+  left: 0;
+  background: linear-gradient(90deg, #fff 20%, rgba(255, 255, 255, 0));
+}
+
+.why-choose-marquee-viewport::after {
+  right: 0;
+  background: linear-gradient(270deg, #fff 20%, rgba(255, 255, 255, 0));
+}
+
+@media (max-width: 1024px) {
+  .marquee-track {
+    gap: 14px;
+    animation-duration: 18s;
+  }
+
+  .why-choose-marquee-viewport::before,
+  .why-choose-marquee-viewport::after {
+    width: 34px;
+  }
+}
+
+@media (max-width: 767px) {
+  .home-shell {
+    width: min(1240px, calc(100% - 1.5rem));
+  }
+
+  .marquee-track {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 0.9rem;
+    animation: none;
+  }
+
+  .why-choose-marquee-viewport::before,
+  .why-choose-marquee-viewport::after {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .marquee-track {
+    grid-template-columns: 1fr;
+  }
 }
 
 .marquee-track:hover {
@@ -67,6 +169,7 @@
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(229, 231, 235, 0.8);
   text-align: center;
+  height: 100%;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -198,7 +301,7 @@
 
 .collections-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.5rem;
 }
 
@@ -633,12 +736,95 @@
   color: #6b7280;
 }
 
+@media (max-width: 1024px) {
+  .footer-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem;
+    padding: 3rem 1.25rem;
+  }
+
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 767px) {
+  .footer {
+    margin-top: 3.5rem;
+  }
+
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 1.65rem;
+    padding: 2.2rem 1rem;
+  }
+
+  .footer-brand {
+    grid-column: auto;
+  }
+
+  .footer-description {
+    margin-bottom: 1rem;
+  }
+
+  .footer-social {
+    gap: 0.5rem;
+  }
+
+  .footer-contact-item {
+    margin-bottom: 0.55rem;
+  }
+
+  .footer-contact-item span {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
+@media (max-width: 767px) {
+  .why-choose-section,
+  .collections-section,
+  .testimonials-section,
+  .newsletter-section,
+  .stats-section {
+    padding: 2.35rem 0;
+  }
+
+  .why-choose-header,
+  .collections-header,
+  .testimonials-header {
+    margin-bottom: 1.4rem;
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 640px) {
+  .home-shell {
+    width: min(1240px, calc(100% - 1.1rem));
+  }
+
   .why-choose-grid,
   .collections-grid,
   .testimonials-grid {
     grid-template-columns: 1fr;
+  }
+
+  .why-choose-card,
+  .testimonial-card,
+  .collection-card {
+    border-radius: 0.85rem;
+  }
+
+  .why-choose-card {
+    padding: 1.1rem;
+  }
+
+  .why-choose-card-title {
+    font-size: 1rem;
+  }
+
+  .why-choose-card-desc {
+    font-size: 0.84rem;
   }
   
   .stats-grid {

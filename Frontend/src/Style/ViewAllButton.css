@@ -6,6 +6,11 @@
   padding: 2rem 0;
 }
 
+.view-all-products-button-wrapper a {
+  display: inline-flex;
+  width: fit-content;
+}
+
 .view-all-products-button {
   display: inline-flex;
   align-items: center;
@@ -114,7 +119,17 @@
 
 /* Responsive adjustments */
 @media (max-width: 640px) {
+  .view-all-products-button-wrapper {
+    margin-top: 1.8rem;
+    padding: 1rem 0;
+  }
+
+  .view-all-products-button-wrapper a {
+    width: min(100%, 320px);
+  }
+
   .view-all-products-button {
+    width: 100%;
     padding: 1rem 2rem;
     font-size: 0.9375rem;
     min-width: 180px;

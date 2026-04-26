@@ -5,6 +5,7 @@ import { useContext, useState } from "react";
 import CartContext from "../../Context/CartContext";
 import { motion } from "framer-motion";
 import { UserPlus, User, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import "../../../Style/Auth.css";
 
 function SignUp() {
   const backendBaseUrl = (
@@ -23,17 +24,17 @@ function SignUp() {
   const { SetRegisterStatus } = useContext(CartContext);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [responseData, setResponseData] = useState("");
 
   const password = watch("Password");
 
   const onSubmit = async (data) => {
     try {
-      console.log(data)
       await axios.post(`${backendBaseUrl}/signup`, data);
       SetRegisterStatus(true);
       Navigate("/");
     } catch (err) {
-      console.error(err);
+      setResponseData("Signup failed. Please review your details and try again.");
     }
   };
 
@@ -42,32 +43,30 @@ function SignUp() {
   };
 
   return (
-    <div className="flex bg-gradient-to-br from-slate-50 via-purple-50/40 to-pink-50/30" style={{ minHeight: 'calc(100vh - 5rem)' }}>
-      <div className="flex-1 flex items-center justify-center px-6 py-12">
+    <div className="auth-shell">
+      <div className="w-full flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.15 }}
-          className="w-full  max-w-md"
-          style={{ maxWidth: '500px' }}
+          className="auth-card auth-card--signup"
         >
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="mx-auto w-14 h-14 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-200 mb-5">
-              <UserPlus className="w-7 h-7 text-white" />
+          <div className="auth-header">
+            <div className="auth-badge">
+              <UserPlus size={24} />
             </div>
-            <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Create account</h2>
-            <p className="text-gray-500 mt-2 text-sm">Join us and start shopping today</p>
+            <h2 className="auth-title">
+              Create account
+            </h2>
+            <p className="auth-subtitle">Join us and start shopping today</p>
           </div>
 
-          {/* Google Button */}
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 px-5 py-3 bg-white border border-gray-200 rounded-xl font-semibold text-gray-700 hover:border-purple-300 hover:bg-purple-50/40 hover:shadow-md transition-all duration-200 group"
-            style={{ minHeight: '48px' }}
+            className="auth-google-btn"
           >
-            <svg className="w-5 h-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" />
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -76,165 +75,162 @@ function SignUp() {
             Sign up with Google
           </button>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-6">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-            <span className="text-xs text-gray-400 font-medium uppercase tracking-widest">or</span>
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+          <div className="auth-divider" aria-hidden="true">
+            <div className="auth-divider-line" />
+            <span className="auth-divider-text">or</span>
+            <div className="auth-divider-line" />
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="John Doe"
-                  className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all duration-200"
-                  style={{ minHeight: '48px' }}
-                  {...register("Username", {
-                    required: { value: true, message: "Name is required" },
-                  })}
-                />
+          <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
+            <div className="auth-field-grid auth-field-grid--two">
+              <div className="auth-field">
+                <label className="auth-label">Full Name</label>
+                <div className="auth-control-wrap">
+                  <User className="auth-control-icon" />
+                  <input
+                    type="text"
+                    placeholder="John Doe"
+                    className="auth-control"
+                    {...register("Username", {
+                      required: { value: true, message: "Name is required" },
+                    })}
+                  />
+                </div>
+                {errors.Username && (
+                  <p className="auth-error">{errors.Username.message}</p>
+                )}
               </div>
-              {errors.Username && (
-                <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.Username.message}</p>
-              )}
+
+              <div className="auth-field">
+                <label className="auth-label">Email</label>
+                <div className="auth-control-wrap">
+                  <Mail className="auth-control-icon" />
+                  <input
+                    type="email"
+                    placeholder="example@email.com"
+                    className="auth-control"
+                    {...register("Email", {
+                      required: { value: true, message: "Email is required" },
+                      pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: "Invalid email address",
+                      },
+                    })}
+                  />
+                </div>
+                {errors.Email && (
+                  <p className="auth-error">{errors.Email.message}</p>
+                )}
+              </div>
             </div>
 
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
-              <div className="relative">
-                <input
-                  type="email"
-                  placeholder="example@email.com"
-                  className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all duration-200"
-                  style={{ minHeight: '48px' }}
-                  {...register("Email", {
-                    required: { value: true, message: "Email is required" },
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Invalid email address",
-                    },
-                  })}
-                />
+            <div className="auth-field-grid auth-field-grid--two">
+              <div className="auth-field">
+                <label className="auth-label">Password</label>
+                <div className="auth-control-wrap">
+                  <Lock className="auth-control-icon" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Min. 7 characters"
+                    className="auth-control auth-control--with-toggle"
+                    {...register("Password", {
+                      required: { value: true, message: "Password is required" },
+                      minLength: { value: 7, message: "Min length is 7 characters" },
+                    })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="auth-toggle"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {errors.Password && (
+                  <p className="auth-error">{errors.Password.message}</p>
+                )}
               </div>
-              {errors.Email && (
-                <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.Email.message}</p>
-              )}
+
+              <div className="auth-field">
+                <label className="auth-label">Confirm Password</label>
+                <div className="auth-control-wrap">
+                  <Lock className="auth-control-icon" />
+                  <input
+                    type={showConfirm ? "text" : "password"}
+                    placeholder="Repeat your password"
+                    className="auth-control auth-control--with-toggle"
+                    {...register("ConfirmPassword", {
+                      required: { value: true, message: "Please confirm your password" },
+                      validate: (value) => value === password || "Passwords do not match",
+                    })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="auth-toggle"
+                  >
+                    {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {errors.ConfirmPassword && (
+                  <p className="auth-error">{errors.ConfirmPassword.message}</p>
+                )}
+              </div>
             </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Min. 7 characters"
-                  className="w-full pl-11 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all duration-200"
-                  style={{ minHeight: '48px' }}
-                  {...register("Password", {
-                    required: { value: true, message: "Password is required" },
-                    minLength: { value: 7, message: "Min length is 7 characters" },
-                  })}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-                </button>
+            <div className="auth-field-grid auth-field-grid--two">
+              <div className="auth-field">
+                <label className="auth-label">
+                  Phone <span className="auth-label-optional">(Optional)</span>
+                </label>
+                <div className="auth-control-wrap">
+                  <input
+                    type="tel"
+                    placeholder="+92 (555) 123-4567"
+                    {...register("Phone", {
+                      pattern: {
+                        value: /^\+?[1-9]\d{1,14}$/,
+                        message: "Please enter a valid phone number",
+                      },
+                    })}
+                    className="auth-control"
+                  />
+                </div>
+                {errors.Phone && (
+                  <p className="auth-error">{errors.Phone.message}</p>
+                )}
               </div>
-              {errors.Password && (
-                <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.Password.message}</p>
-              )}
+
+              <div className="auth-field">
+                <label className="auth-label">
+                  Address <span className="auth-label-optional">(Optional)</span>
+                </label>
+                <div className="auth-control-wrap">
+                  <input
+                    type="text"
+                    placeholder="Enter your address"
+                    {...register("Address")}
+                    className="auth-control"
+                  />
+                </div>
+                {errors.Address && (
+                  <p className="auth-error">{errors.Address.message}</p>
+                )}
+              </div>
             </div>
 
-            {/* Confirm Password */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Confirm Password</label>
-              <div className="relative">
-                <input
-                  type={showConfirm ? "text" : "password"}
-                  placeholder="Repeat your password"
-                  className="w-full pl-11 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all duration-200"
-                  style={{ minHeight: '48px' }}
-                  {...register("ConfirmPassword", {
-                    required: { value: true, message: "Please confirm your password" },
-                    validate: (value) => value === password || "Passwords do not match",
-                  })}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showConfirm ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-                </button>
-              </div>
-              {errors.ConfirmPassword && (
-                <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.ConfirmPassword.message}</p>
-              )}
-            </div>
-
-
-
-
-   {/* Phone */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone: <span className="font-light ">(Optional)</span></label>
-              <div className="relative">
-                <input
-                  type="tel"
-                  placeholder="+92 (555) 123-4567"
-                  {...register("Phone", {
-                    pattern: {
-                      value: /^\+?[1-9]\d{1,14}$/,}})}
-                  className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all duration-200"
-                  style={{ minHeight: '48px' }}
-                />
-              </div>
-              {errors.Phone && (
-                <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.Phone.message}</p>
-              )}
-            </div>
-
-
-
-   {/* Address */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Address: <span className="font-light ">(Optional)</span></label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Enter your address"
-                  {...register("Address")}
-                  className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all duration-200"
-                  style={{ minHeight: '48px' }}
-                />
-              </div>
-              {errors.Address && (
-                <p className="text-red-500 text-xs mt-1.5 ml-1">{errors.Address.message}</p>
-              )}
-            </div>
-                        {/* Submit */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 mt-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl font-bold text-sm hover:from-pink-700 hover:to-purple-700 transition-all duration-200 shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-              style={{ minHeight: '48px' }}
+              className="auth-submit"
             >
               {isSubmitting ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
+                <span className="auth-submit-content">
+                  <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Creating account…
+                  Creating account...
                 </span>
               ) : (
                 "Create Account"
@@ -242,19 +238,28 @@ function SignUp() {
             </button>
 
             {errors.myform && (
-              <p className="text-red-500 text-sm text-center">{errors.myform.message}</p>
+              <p className="auth-error">{errors.myform.message}</p>
             )}
             {errors.blocked && (
-              <p className="text-red-500 text-sm text-center">{errors.blocked.message}</p>
+              <p className="auth-error">{errors.blocked.message}</p>
             )}
           </form>
 
-          {/* Footer */}
-          <p className="text-center text-gray-500 text-sm mt-8">
-            Already have an account?{" "}
+          {responseData && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="auth-feedback"
+            >
+              {responseData}
+            </motion.div>
+          )}
+
+          <p className="auth-footer">
+            Already have an account?
             <Link
               to="/login"
-              className="text-purple-600 font-semibold hover:text-purple-700 transition-colors"
+              className="auth-footer-link"
             >
               Sign in
             </Link>

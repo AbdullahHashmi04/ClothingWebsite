@@ -604,7 +604,7 @@
   clear: both;
 }
 
-@media (min-width: 700px) {
+@media (min-width: 860px) {
   .modal-layout {
     grid-template-columns: 1fr 1fr;
   }
@@ -1011,21 +1011,157 @@
 }
 
 /* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .cat-container {
+    padding: 0 1rem;
+  }
+
+  .cat-header {
+    padding: 2.2rem 0.5rem 1.8rem;
+  }
+
+  .cat-filters {
+    max-width: 100%;
+    margin-bottom: 1.1rem;
+  }
+
+  .cat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .modal-box {
+    max-width: 95vw;
+  }
+}
+
+@media (max-width: 900px) {
+  .cat-page {
+    padding: 1.4rem 0 3.2rem;
+  }
+
+  .cat-header {
+    padding: 2rem 0.45rem 1.35rem;
+  }
+
+  .cat-title {
+    font-size: clamp(1.8rem, 5.8vw, 2.5rem);
+  }
+
+  .cat-subtitle {
+    margin-bottom: 1.5rem;
+  }
+
+  .cat-filters {
+    gap: 0.8rem;
+  }
+
+  .cat-categories {
+    padding-bottom: 2px;
+  }
+
+  .cat-card-body {
+    padding: 0.85rem;
+  }
+
+  .cat-card-price {
+    font-size: 1rem;
+  }
+
+  .modal-box {
+    max-height: 92vh;
+  }
+
+  .modal-close {
+    margin: 0.7rem 0.7rem 0 0;
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+
+  .modal-img-section {
+    padding: 1.05rem;
+    border-radius: 0;
+  }
+
+  .modal-trust {
+    gap: 0.5rem;
+  }
+
+  .modal-trust-item {
+    font-size: 0.71rem;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .modal-info {
+    padding: 1.2rem 1.1rem 1.4rem;
+  }
+
+  .modal-price {
+    font-size: 1.45rem;
+  }
+}
+
+@media (hover: none) {
+  .cat-card-vto {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .cat-card-overlay {
+    display: none;
+  }
+}
+
 @media (max-width: 640px) {
   .cat-page { padding: 1rem 0 3rem; }
   .cat-header { padding: 2rem 0.5rem 1.5rem; }
   .cat-header-stats { gap: 1.2rem; padding: 0.7rem 1.2rem; }
-  .cat-grid { grid-template-columns: repeat(2, 1fr); gap: 0.85rem; }
+  .cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; }
   .cat-card-body { padding: 0.75rem; }
   .cat-card-name { font-size: 0.85rem; }
   .cat-card-price { font-size: 0.95rem; }
+  .cat-card-vto {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.75rem;
+  }
+  .modal-sizes {
+    gap: 0.4rem;
+  }
+  .modal-size-btn {
+    min-width: 2.6rem;
+    height: 2.3rem;
+    font-size: 0.78rem;
+  }
   .cat-toast { bottom: 1rem; right: 1rem; left: 1rem; }
   .modal-box { border-radius: 1rem; }
   .modal-img-section { border-radius: 0; }
 }
 
+@media (max-width: 560px) {
+  .cat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cat-search-input {
+    font-size: 0.9rem;
+    padding: 0.82rem 2.6rem 0.82rem 2.7rem;
+  }
+
+  .cat-cat-btn {
+    padding: 0.58rem 0.95rem;
+    font-size: 0.8rem;
+  }
+}
+
 @media (max-width: 380px) {
-  .cat-grid { grid-template-columns: 1fr; }
+  .cat-header-badge {
+    font-size: 0.68rem;
+    padding: 0.35rem 0.8rem;
+  }
+
+  .cat-title {
+    font-size: 1.65rem;
+  }
 }
 
 /* ── ACCESSIBILITY ── */

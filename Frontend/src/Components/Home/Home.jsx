@@ -1,8 +1,8 @@
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
-  ChevronLeft, ChevronRight, ShoppingBag, Sparkles,
-  TrendingUp, Heart, Star, Award, Truck, Shield,Shirt,
-  RefreshCw, Users, CheckCircle, ArrowRight, Zap, Gift,
+  ShoppingBag, Sparkles,
+  TrendingUp, Heart, Star, Award, Truck, Shield, Shirt,
+  RefreshCw, CheckCircle, ArrowRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CartContext from "../Context/CartContext";
@@ -109,7 +109,7 @@ export default function HeroSlider() {
     addToCart(item)
   }
   return (
-    <div className="w-full overflow-x-hidden">
+    <div className="w-full overflow-x-hidden home-page">
       <div className="hero-section">
         {slides.map((slide, index) => (
           <motion.div
@@ -205,8 +205,8 @@ export default function HeroSlider() {
       </div>
 
       {/* Featured Products Section */}
-      <section className="relative w-full py-20 bg-gradient-to-b from-white via-purple-50/20 to-white">
-        <div className="w-auto mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative w-full py-20 bg-linear-to-b from-white via-purple-50/20 to-white home-section featured-products-section">
+        <div className="home-shell">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -226,7 +226,7 @@ export default function HeroSlider() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="featured-products-grid">
             {mydata.slice(0, 8).map((item, index) => {
               const price = item.price || Math.floor(Math.random() * 200) + 20;
               const originalPrice = Math.floor(price * 1.3);
@@ -352,7 +352,7 @@ export default function HeroSlider() {
       </section>
 
       <section className="premium-collection-section">
-        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="home-shell">
           <div className="grid md:grid-cols-2 gap-16 items-center mb-20">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
@@ -461,13 +461,13 @@ export default function HeroSlider() {
       </section>
 
       <section className="why-choose-section">
-        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="home-shell">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <div className="why-choose-header "style={{ overflow: "hidden" }}>
+            <div className="why-choose-header" style={{ overflow: "hidden" }}>
               <h2 className="why-choose-title">
                 Why Choose {" "}
                 <span className="why-choose-title-gradient">Smartify</span>?
@@ -476,31 +476,33 @@ export default function HeroSlider() {
                 Experience the difference with our premium services
               </p>
             </div>
-             <div className="marquee-track">
-              {[...items, ...items].map((item, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="why-choose-card"
-                >
-                  <div className="why-choose-icon-wrapper">
-                    <item.icon className="why-choose-icon"   /  >
-                  </div>
-                  <h3 className="why-choose-card-title">{item.title}</h3>
-                  <p className="why-choose-card-desc">{item.desc}</p>
-                </motion.div>
+            <div className="why-choose-marquee-viewport">
+              <div className="marquee-track">
+                {[...items, ...items].map((item, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="why-choose-card"
+                  >
+                    <div className="why-choose-icon-wrapper">
+                      <item.icon className="why-choose-icon" />
+                    </div>
+                    <h3 className="why-choose-card-title">{item.title}</h3>
+                    <p className="why-choose-card-desc">{item.desc}</p>
+                  </motion.div>
                 ))}
+              </div>
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* Collections Section */}
-      <section className="collections-section">
-        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="collections-section home-section">
+        <div className="home-shell">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -602,8 +604,8 @@ export default function HeroSlider() {
       </AnimatePresence>
 
       {/* Testimonials Section */}
-      <section className="testimonials-section">
-        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="testimonials-section home-section">
+        <div className="home-shell">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}

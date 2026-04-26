@@ -178,20 +178,26 @@ export default function Vto() {
     { value: 'dresses', label: 'Dresses', icon: '👗' },
   ];
 
+  const quickSteps = [
+    { id: '01', label: 'Upload your photo' },
+    { id: '02', label: 'Select a garment' },
+    { id: '03', label: 'Tap Try It On' },
+  ];
+
   // Filter catalog for shelf — show up to 10 items
   const shelfProducts = catalogData ? catalogData.slice(0, 10) : [];
 
   return (
-    <div style={s.page}>
+    <div style={s.page} className="vto-page">
       {/* ── Decorative background blobs ── */}
       <div style={s.blob1} />
       <div style={s.blob2} />
       <div style={s.blob3} />
 
-      <div style={s.container}>
+      <div style={s.container} className="vto-container">
 
         {/* ── HEADER ── */}
-        <div style={s.header}>
+        <div style={s.header} className="vto-header">
           <div style={s.badge}>
             <span style={s.badgeDot}>✦</span>
             <span style={s.badgeText}>AI-Powered Experience</span>
@@ -205,11 +211,12 @@ export default function Vto() {
         </div>
 
         {/* ── CATEGORY TABS ── */}
-        <div style={s.tabRow}>
+        <div style={s.tabRow} className="vto-tab-row">
           {categories.map(cat => (
             <button
               key={cat.value}
               onClick={() => setCategory(cat.value)}
+              className="vto-tab-btn vto-tab"
               style={{
                 ...s.tab,
                 ...(category === cat.value ? s.tabActive : {}),
@@ -221,6 +228,15 @@ export default function Vto() {
           ))}
         </div>
 
+        <div style={s.stepsRow} className="vto-steps-row">
+          {quickSteps.map(step => (
+            <div key={step.id} style={s.stepPill} className="vto-step-pill">
+              <span style={s.stepPillId}>{step.id}</span>
+              <span style={s.stepPillLabel}>{step.label}</span>
+            </div>
+          ))}
+        </div>
+
         {/* ── PROGRESS BAR ── */}
         {loading && (
           <div style={s.progressTrack}>
@@ -229,15 +245,15 @@ export default function Vto() {
         )}
 
         {/* ── THREE CARDS ── */}
-        <div style={s.grid}>
+        <div style={s.grid} className="vto-grid">
 
           {/* Card 1 – Your Photo */}
-          <div style={s.card}>
+          <div style={s.card} className="vto-card">
             <div style={s.cardHead}>
               <span style={s.stepNum}>1</span>
               <span style={s.cardLabel}>Your Photo</span>
               {humanPreview && (
-                <button onClick={clearPerson} style={s.iconBtn} title="Remove">✕</button>
+                <button onClick={clearPerson} style={s.iconBtn} className="vto-icon-btn" title="Remove">✕</button>
               )}
             </div>
             <div
@@ -246,6 +262,7 @@ export default function Vto() {
                 ...(dragActive ? s.dropActive : {}),
                 ...(humanPreview ? s.dropFilled : {}),
               }}
+              className="vto-drop-zone"
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
@@ -260,7 +277,7 @@ export default function Vto() {
                 style={{ display: 'none' }}
               />
               {humanPreview ? (
-                <img src={humanPreview} alt="Your Photo" style={s.previewImg} />
+                <img src={humanPreview} alt="Your Photo" style={s.previewImg} className="vto-preview-img" />
               ) : (
                 <div style={s.emptyBody}>
                   <div style={s.uploadIcon}>
@@ -279,7 +296,7 @@ export default function Vto() {
           </div>
 
           {/* Card 2 – Selected Garment */}
-          <div style={s.card}>
+          <div style={s.card} className="vto-card">
             <div style={s.cardHead}>
               <span style={s.stepNum}>2</span>
               <span style={s.cardLabel}>Selected Garment</span>
@@ -291,13 +308,14 @@ export default function Vto() {
               ...s.dropZone,
               ...(ImageVto && ImageVto.length > 0 ? s.dropFilled : {}),
               cursor: 'default',
-            }}>
+            }} className="vto-drop-zone">
               {ImageVto && ImageVto.length > 0 ? (
                 <div style={s.garmentPreview}>
                   <img
                     src={ImageVto[0].img || ImageVto[0].imageUrl || ImageVto[0].image}
                     alt={ImageVto[0].name || 'Selected Garment'}
                     style={s.previewImg}
+                    className="vto-preview-img"
                   />
                   {ImageVto[0].name && (
                     <div style={s.garmentTag}>{ImageVto[0].name}</div>
@@ -314,20 +332,20 @@ export default function Vto() {
           </div>
 
           {/* Card 3 – Result */}
-          <div style={s.card}>
+          <div style={s.card} className="vto-card">
             <div style={s.cardHead}>
               <span style={s.stepNum}>3</span>
               <span style={s.cardLabel}>Result</span>
               {result && (
                 <div style={{ display: 'flex', gap: '6px' }}>
-                  <button onClick={handleDownload} style={s.iconBtn} title="Download">
+                  <button onClick={handleDownload} style={s.iconBtn} className="vto-icon-btn" title="Download">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                       <polyline points="7 10 12 15 17 10" />
                       <line x1="12" y1="15" x2="12" y2="3" />
                     </svg>
                   </button>
-                  <button onClick={clearResult} style={s.iconBtn} title="Clear">✕</button>
+                  <button onClick={clearResult} style={s.iconBtn} className="vto-icon-btn" title="Clear">✕</button>
                 </div>
               )}
             </div>
@@ -335,7 +353,7 @@ export default function Vto() {
               ...s.dropZone,
               ...(result ? s.dropFilled : {}),
               cursor: 'default',
-            }}>
+            }} className="vto-drop-zone">
               {loading ? (
                 <div style={s.emptyBody}>
                   <div style={s.spinner} />
@@ -348,7 +366,7 @@ export default function Vto() {
                   </div>
                 </div>
               ) : result ? (
-                <img src={result} alt="VTO Result" style={s.previewImg} />
+                <img src={result} alt="VTO Result" style={s.previewImg} className="vto-preview-img" />
               ) : (
                 <div style={s.emptyBody}>
                   <div style={{ ...s.emptyClothIcon, fontSize: '42px' }}>✨</div>
@@ -361,10 +379,11 @@ export default function Vto() {
         </div>
 
         {/* ── TRY ON BUTTON ── */}
-        <div style={s.btnRow}>
+        <div style={s.btnRow} className="vto-btn-row">
           <button
             onClick={handleTryOn}
             disabled={loading}
+            className="vto-try-btn"
             style={{ ...s.tryBtn, ...(loading ? s.tryBtnDisabled : {}) }}
           >
             {loading ? (
@@ -383,7 +402,7 @@ export default function Vto() {
 
         {/* ── ERROR ── */}
         {error && (
-          <div style={s.errorBox}>
+          <div style={s.errorBox} className="vto-error-box">
             <span style={{ fontSize: '16px', flexShrink: 0 }}>⚠️</span>
             <span style={{ flex: 1 }}>{error}</span>
             <button onClick={() => setError(null)} style={s.errorClose}>✕</button>
@@ -393,8 +412,8 @@ export default function Vto() {
         {/* ═══════════════════════════════════════════════
               PRODUCT SHELF — pick a garment
         ═══════════════════════════════════════════════ */}
-        <div style={s.shelfSection}>
-          <div style={s.shelfHeader}>
+        <div style={s.shelfSection} className="vto-shelf-section">
+          <div style={s.shelfHeader} className="vto-shelf-header">
             <div>
               <h2 style={s.shelfTitle}>Choose a Garment</h2>
               <p style={s.shelfSubtitle}>Select any product to try it on virtually</p>
@@ -410,7 +429,7 @@ export default function Vto() {
               <p>No products available yet</p>
             </div>
           ) : (
-            <div style={s.shelf}>
+            <div style={s.shelf} className="vto-shelf-grid">
               {shelfProducts.map((product, idx) => {
                 const img = getProductImage(product);
                 const isSelected = selectedGarmentId && (selectedGarmentId === (product._id || product.id));
@@ -418,6 +437,7 @@ export default function Vto() {
                 return (
                   <div
                     key={product._id || product.id || idx}
+                    className="vto-shelf-card"
                     style={{
                       ...s.shelfCard,
                       ...(isSelected ? s.shelfCardSelected : {}),
@@ -465,11 +485,11 @@ export default function Vto() {
         </div>
 
         {/* ── TIPS ── */}
-        <div style={s.tipsCard}>
+        <div style={s.tipsCard} className="vto-tips-card">
           <h4 style={s.tipsTitle}>
             <span>📌</span> Tips for Best Results
           </h4>
-          <div style={s.tipsGrid}>
+          <div style={s.tipsGrid} className="vto-tips-grid">
             {[
               { icon: '📸', label: 'Good Lighting', desc: 'Clear, well-lit environment' },
               { icon: '🧍', label: 'Front Facing', desc: 'Stand straight facing camera' },
@@ -510,6 +530,75 @@ export default function Vto() {
         .vto-icon-btn:hover { background: rgba(124,58,237,.1) !important; color: #7c3aed !important; }
         .vto-shelf-card { transition: transform .28s cubic-bezier(.4,0,.2,1), box-shadow .28s; }
         .vto-shelf-card:hover { transform: translateY(-5px); }
+
+        @media (max-width: 1024px) {
+          .vto-page { padding: 30px 0 64px !important; }
+          .vto-container { padding: 0 16px !important; }
+          .vto-header { padding: 2.4rem .6rem 1.8rem !important; }
+          .vto-steps-row { grid-template-columns: repeat(3,minmax(0,1fr)) !important; }
+          .vto-grid { gap: 16px !important; }
+          .vto-drop-zone { min-height: 270px !important; margin: 12px !important; }
+          .vto-preview-img { max-height: 270px !important; }
+          .vto-shelf-section { padding: 20px !important; margin-bottom: 28px !important; }
+          .vto-shelf-grid { grid-template-columns: repeat(4,minmax(0,1fr)) !important; gap: 12px !important; }
+          .vto-tips-card { padding: 22px 18px !important; }
+          .vto-tips-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 10px !important; }
+        }
+
+        @media (max-width: 768px) {
+          .vto-page { padding: 22px 0 56px !important; }
+          .vto-container { padding: 0 12px !important; }
+          .vto-header { padding: 1.6rem .2rem 1.2rem !important; }
+          .vto-tab-row {
+            width: 100%;
+            display: grid !important;
+            grid-template-columns: 1fr;
+            gap: 8px !important;
+            margin-bottom: 14px !important;
+          }
+          .vto-tab-btn {
+            width: 100% !important;
+            justify-content: center !important;
+            padding: 10px 12px !important;
+            font-size: .82rem !important;
+          }
+          .vto-steps-row {
+            grid-template-columns: 1fr !important;
+            gap: 8px !important;
+            margin-bottom: 14px !important;
+          }
+          .vto-step-pill { padding: 9px 11px !important; }
+          .vto-grid {
+            grid-template-columns: 1fr !important;
+            gap: 14px !important;
+            margin-bottom: 16px !important;
+          }
+          .vto-card { border-radius: 14px !important; }
+          .vto-drop-zone { min-height: 230px !important; margin: 10px !important; }
+          .vto-preview-img { max-height: 230px !important; }
+          .vto-btn-row { margin-bottom: 16px !important; }
+          .vto-try-btn {
+            width: 100% !important;
+            justify-content: center !important;
+            font-size: 15px !important;
+            padding: 13px 14px !important;
+          }
+          .vto-error-box {
+            padding: 12px !important;
+            font-size: 13px !important;
+            align-items: flex-start !important;
+          }
+          .vto-shelf-grid {
+            grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+            gap: 10px !important;
+          }
+          .vto-shelf-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            margin-bottom: 14px !important;
+          }
+          .vto-tips-grid { grid-template-columns: 1fr !important; gap: 8px !important; }
+        }
       `}</style>
     </div>
   );
@@ -601,6 +690,44 @@ const s = {
     lineHeight: 1.6,
   },
 
+  // Quick steps
+  stepsRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3,minmax(0,1fr))',
+    gap: '10px',
+    margin: '0 auto 20px',
+    maxWidth: '860px',
+  },
+  stepPill: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    background: WHITE,
+    border: `1px solid ${BORDER}`,
+    borderRadius: '12px',
+    padding: '10px 12px',
+    boxShadow: '0 2px 10px rgba(0,0,0,.04)',
+  },
+  stepPillId: {
+    minWidth: '30px',
+    height: '30px',
+    borderRadius: '50%',
+    background: GRAD_SOFT,
+    border: `1px solid rgba(124,58,237,.25)`,
+    color: PURPLE,
+    fontSize: '11px',
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepPillLabel: {
+    fontSize: '13px',
+    fontWeight: 600,
+    color: TEXT,
+    lineHeight: 1.35,
+  },
+
   // Category tabs
   tabRow: {
     display: 'flex', justifyContent: 'center', gap: '10px',
@@ -614,7 +741,6 @@ const s = {
     cursor: 'pointer', transition: 'all .22s',
     boxShadow: '0 2px 12px rgba(0,0,0,.06)',
     fontFamily: FONT,
-    className: 'vto-tab',
   },
   tabActive: {
     background: GRAD, borderColor: 'transparent',
@@ -677,7 +803,6 @@ const s = {
     color: MUTED, cursor: 'pointer', fontSize: '12px',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     transition: 'all .2s', fontFamily: FONT,
-    className: 'vto-icon-btn',
   },
 
   // Drop zone
@@ -756,7 +881,6 @@ const s = {
     transition: 'all .28s ease',
     boxShadow: '0 8px 28px rgba(124,58,237,.35)',
     fontFamily: FONT, letterSpacing: '.3px',
-    className: 'vto-try-btn',
   },
   tryBtnDisabled: {
     background: '#d1d5db', color: '#9ca3af',
@@ -826,7 +950,6 @@ const s = {
     cursor: 'pointer', overflow: 'hidden',
     transition: 'all .28s cubic-bezier(.4,0,.2,1)',
     boxShadow: '0 2px 8px rgba(0,0,0,.04)',
-    className: 'vto-shelf-card',
   },
   shelfCardHover: {
     borderColor: `rgba(124,58,237,.35)`,
