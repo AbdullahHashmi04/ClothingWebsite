@@ -15,7 +15,11 @@ export const CartProvider = ({ children }) => {
   const [user, setUserInfo] = useState([])
   const [productData, setProductData] = useState([])
   const [items, setItems] = useState([])
-
+const BACKEND_URI = (
+    import.meta.env.VITE_BACKEND_URI ||
+    import.meta.env.VITE_BACKEND_URL ||
+    ""
+).replace(/\/+$/, "");
 
   // useEffect(() => {
   //   const fetchData = async () => {
@@ -27,7 +31,7 @@ export const CartProvider = ({ children }) => {
 
   useEffect(() => {
     const fetch = async () => {
-      const response = await axios.get("http://localhost:3000/products")
+      const response = await axios.get(`${BACKEND_URI}/products`)
       setProductData(response.data.products)
     }
     fetch();
@@ -54,7 +58,7 @@ export const CartProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const response = await axios.get("http://localhost:3000/products")
+      const response = await axios.get(`${BACKEND_URI}/products`)
       // console.log(response.data.products)
       setCatalog(response.data.products);
       setData(response.data.products)

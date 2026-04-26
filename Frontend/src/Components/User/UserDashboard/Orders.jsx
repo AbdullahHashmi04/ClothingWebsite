@@ -17,6 +17,13 @@ import {
 import CartContext from "../../Context/CartContext";
 import "../../../Style/UserOrders.css";
 
+const BACKEND_URI = (
+  globalThis.process?.env?.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URL ||
+  ""
+).replace(/\/+$/, "");
+
 const normalizeStatus = (status) => {
   const value = (status || "pending").toLowerCase();
   if (["paid", "processing", "shipped", "delivered", "cancelled", "pending"].includes(value)) {
@@ -107,7 +114,7 @@ const UserOrder = () => {
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get(
-          `http://localhost:3000/orders/getUserOrders/${user.Email}`,
+          `${BACKEND_URI}/orders/getUserOrders/${user.Email}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

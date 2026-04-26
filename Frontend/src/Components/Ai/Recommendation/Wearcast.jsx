@@ -14,7 +14,12 @@ import CartContext from "../../Context/CartContext";
 import "../../../Style/Wearcast.css";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const API_BASE = "http://localhost:3000/api/weather";
+const BACKEND_URI = (
+  import.meta.env.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URL ||
+  ""
+).replace(/\/+$/, "");
+const API_BASE = `${BACKEND_URI}/api/weather`;
 const DAYS     = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const MONTHS   = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 

@@ -5,6 +5,13 @@ import axios from "axios";
 import { useContext } from "react";
 import  CartContext  from "../../Context/CartContext";
 
+const BACKEND_URI = (
+  globalThis.process?.env?.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URL ||
+  ""
+).replace(/\/+$/, "");
+
 export default function UserWishlist() {
   const [items, setItems] = useState([]);
   const remove = (id) => setItems(items.filter(i => i.id !== id));
@@ -14,7 +21,7 @@ export default function UserWishlist() {
   useEffect(() => {
 
     const fetch = async () => {
-      const res = await axios.get(`http://localhost:3000/wishlist/${user.Email}`)
+      const res = await axios.get(`${BACKEND_URI}/wishlist/${user.Email}`)
       setItems(res.data)
     }
     fetch()

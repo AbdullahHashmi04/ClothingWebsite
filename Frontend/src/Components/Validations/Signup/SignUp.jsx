@@ -7,6 +7,12 @@ import { motion } from "framer-motion";
 import { UserPlus, User, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 function SignUp() {
+  const backendBaseUrl = (
+    import.meta.env.VITE_BACKEND_URL ||
+    import.meta.env.BACKEND_URL ||
+    "http://localhost:3000"
+  ).replace(/\/+$/, "");
+
   const {
     handleSubmit,
     register,
@@ -23,7 +29,7 @@ function SignUp() {
   const onSubmit = async (data) => {
     try {
       console.log(data)
-      await axios.post("http://localhost:3000/signup", data);
+      await axios.post(`${backendBaseUrl}/signup`, data);
       SetRegisterStatus(true);
       Navigate("/");
     } catch (err) {
@@ -32,7 +38,7 @@ function SignUp() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:3000/googleLogin";
+    window.location.href = `${backendBaseUrl}/googleLogin`;
   };
 
   return (

@@ -15,6 +15,12 @@ import {
 } from "lucide-react";
 import "../../Style/Cart.css";
 
+const BACKEND_URI = (
+  import.meta.env.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URL ||
+  ""
+).replace(/\/+$/, "");
+
 function getItemKey(item, index) {
   return item?.id || item?._id || item?.cartItemId || `${item?.name || "item"}-${index}`;
 }
@@ -59,7 +65,7 @@ function Cart() {
     setPromoError("");
 
     try {
-      const res = await axios.post("http://localhost:3000/discounts/applyDiscount", {
+      const res = await axios.post(`${BACKEND_URI}/discounts/applyDiscount`, {
         code: promoCode.trim(),
         cartTotal: subtotal,
       });

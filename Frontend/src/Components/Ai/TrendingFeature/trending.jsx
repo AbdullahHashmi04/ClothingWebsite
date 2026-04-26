@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getCached, setCached } from "./cache";
+
+const BACKEND_URI = (
+  import.meta.env.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URL ||
+  ""
+).replace(/\/+$/, "");
 // ── Region config ──────────────────────────────────────────────────────────────
 const REGIONS = [
   { name: "All", emoji: "🇵🇰", color: "#9333ea" },
@@ -907,7 +913,7 @@ export default function TrendingPage() {
     setError(null);
     setItems([]);
     try {
-      const url = `http://localhost:3000/trending${region !== "All" ? `?region=${encodeURIComponent(region)}` : ""}`;
+      const url = `${BACKEND_URI}/trending${region !== "All" ? `?region=${encodeURIComponent(region)}` : ""}`;
       const resp = await fetch(url, { signal: controllerRef.current.signal });
       if (!resp.ok) throw new Error(`Server error (${resp.status})`);
       const data = await resp.json();

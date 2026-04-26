@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './Style/index.css'
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { Auth0Provider } from '@auth0/auth0-react';
+import axios from "axios";
 const AuthCallback = lazy(() => import('./Components/AuthCallBack/AuthCallback.jsx'));
 import { CartProvider } from "./Components/Context/CartContext.jsx"
 import App from "./Components/App.jsx"
@@ -78,6 +79,44 @@ const PageLoader = () => (
     <span className="page-loader-text">Loading…</span>
   </div>
 );
+
+const LOCAL_BACKEND_ORIGIN = "http://localhost:3000";
+const backendBaseUrl = (
+  import.meta.env.VITE_BACKEND_URL ||
+  import.meta.env.BACKEND_URL ||
+  LOCAL_BACKEND_ORIGIN
+).replace(/\/+$/, "");
+
+const rewriteBackendUrl = (url) => {
+  if (typeof url !== "string" || !url.startsWith(LOCAL_BACKEND_ORIGIN)) {
+    return url;
+  }
+
+  return `${backendBaseUrl}${url.slice(LOCAL_BACKEND_ORIGIN.length)}`;
+};
+
+axios.interceptors.request.use((config) => {
+  if (typeof config.url === "string") {
+    config.url = rewriteBackendUrl(config.url);
+  }
+  return config;
+});
+
+const nativeFetch = window.fetch.bind(window);
+window.fetch = (input, init) => {
+  if (typeof input === "string") {
+    return nativeFetch(rewriteBackendUrl(input), init);
+  }
+
+  if (input instanceof Request) {
+    const rewrittenUrl = rewriteBackendUrl(input.url);
+    if (rewrittenUrl !== input.url) {
+      return nativeFetch(new Request(rewrittenUrl, input), init);
+    }
+  }
+
+  return nativeFetch(input, init);
+};
 
 
 const router = createBrowserRouter([

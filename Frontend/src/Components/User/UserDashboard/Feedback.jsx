@@ -5,6 +5,13 @@ import "../../../Style/Feedback.css";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 
+const BACKEND_URI = (
+    globalThis.process?.env?.VITE_BACKEND_URI ||
+    import.meta.env.VITE_BACKEND_URI ||
+    import.meta.env.VITE_BACKEND_URL ||
+    ""
+).replace(/\/+$/, "");
+
 const Feedback = () => {
     const [rating, setRating] = useState(0);
     const [hoveredRating, setHoveredRating] = useState(0);
@@ -17,7 +24,7 @@ const Feedback = () => {
     } = useForm();
 
     const onSubmit = async (data) => {
-        const res = await axios.post("http://localhost:3000/Feedback", data);
+        const res = await axios.post(`${BACKEND_URI}/Feedback`, data);
         if (res.status === 200) {
             setSubmitted(true);
         }

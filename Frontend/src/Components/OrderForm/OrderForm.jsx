@@ -18,7 +18,11 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import "../../Style/OrderForm.css";
-
+const BACKEND_URI = (
+    import.meta.env.VITE_BACKEND_URI ||
+    import.meta.env.VITE_BACKEND_URL ||
+    ""
+).replace(/\/+$/, "");
 const OrderForm = () => {
   const navigate = useNavigate();
   const { cart, clearCart, user, loginStatus } = useContext(CartContext);
@@ -77,7 +81,7 @@ const OrderForm = () => {
         cart: cart.map((item) => ({ name: item.name })),
       };
 
-      const res = await axios.post("http://localhost:3000/orders/createOrder", {
+      const res = await axios.post(`${BACKEND_URI}/orders/createOrder`, {
         data: payload,
       });
 

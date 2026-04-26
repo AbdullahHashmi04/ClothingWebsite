@@ -2,6 +2,12 @@ import React, { useContext, useEffect, useState, useRef } from 'react';
 import CartContext from '../../Context/CartContext';
 import axios from 'axios';
 
+const BACKEND_URI = (
+  import.meta.env.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URL ||
+  ''
+).replace(/\/+$/, '');
+
 export default function Vto() {
   const [humanPreview, setHumanPreview] = useState(null);
   const [humanFile, setHumanFile] = useState(null);
@@ -122,7 +128,7 @@ export default function Vto() {
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const response = await axios.post(
-        `http://localhost:3000/viton`,
+        `${BACKEND_URI}/viton`,
         formData,
         {
           headers: { 'Content-Type': 'multipart/form-data', ...headers },

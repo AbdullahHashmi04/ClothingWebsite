@@ -11,6 +11,11 @@ import { LogIn, Eye, EyeOff } from "lucide-react";
 export default function LoginPage() {
   const [responseData, setResponseData] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const backendBaseUrl = (
+    import.meta.env.VITE_BACKEND_URL ||
+    import.meta.env.BACKEND_URL ||
+    "http://localhost:3000"
+  ).replace(/\/+$/, "");
 
   const {
     handleSubmit,
@@ -21,11 +26,11 @@ export default function LoginPage() {
   const { setLoginStatus, setUserInfo } = useContext(CartContext);
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:3000/googleLogin";
+    window.location.href = `${backendBaseUrl}/googleLogin`;
   };
 const onSubmit = async (data) => {
   try {
-    const res = await axios.post("http://localhost:3000/login", data);
+    const res = await axios.post(`${backendBaseUrl}/login`, data);
 
     const { token } = res.data;
     const { query } = res.data;

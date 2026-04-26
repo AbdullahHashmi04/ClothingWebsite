@@ -2,6 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import "../../../Style/Chatbot.css";
 
+const BACKEND_URI = (
+  import.meta.env.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URL ||
+  ""
+).replace(/\/+$/, "");
+
 function formatTime(d) {
   return new Intl.DateTimeFormat([], {
     hour: "2-digit",
@@ -69,7 +75,7 @@ export default function ChatWidget({ botName = "RAZ Assistant" }) {
     setIsTyping(true);
 
     try {
-      const res = await fetch("http://localhost:3000/chat", {
+      const res = await fetch(`${BACKEND_URI}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMessage }),
@@ -135,7 +141,7 @@ export default function ChatWidget({ botName = "RAZ Assistant" }) {
       ]);
 
       const res = await axios.get(
-        `http://localhost:3000/orders/getUserOrdersforChatbot/${id}`,
+        `${BACKEND_URI}/orders/getUserOrdersforChatbot/${id}`,
       );
       const orders = res.data;
 

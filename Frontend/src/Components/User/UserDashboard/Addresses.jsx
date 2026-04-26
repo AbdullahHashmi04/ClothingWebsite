@@ -3,6 +3,13 @@ import { C, Badge, Card, SectionTitle, Btn } from "./shared";
 import axios from "axios";
 import CartContext from "../../Context/CartContext";
 
+const BACKEND_URI = (
+  globalThis.process?.env?.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URL ||
+  ""
+).replace(/\/+$/, "");
+
 export default function UserAddresses() {
 
   const [adding, setAdding] = useState(false);
@@ -11,7 +18,7 @@ export default function UserAddresses() {
 
   useEffect(() => {
     const fetch = async ()=>{
-      const res = await axios.get(`http://localhost:3000/customers/getcustomers/${user._id}`, {
+      const res = await axios.get(`${BACKEND_URI}/customers/getcustomers/${user._id}`, {
         headers: { "Content-Type": "application/json" }})
         console.log( res.data);
         setUserData([res.data])

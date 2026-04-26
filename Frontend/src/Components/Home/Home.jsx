@@ -14,7 +14,11 @@ import "../../Style/Sections.css";
 import "../../Style/ViewAllButton.css";
 import "../../Style/HeroSection.css";
 import axios from 'axios'
-
+const BACKEND_URI = (
+    import.meta.env.VITE_BACKEND_URI ||
+    import.meta.env.VITE_BACKEND_URL ||
+    ""
+).replace(/\/+$/, "");
 const slides = [
   {
     type: "image",
@@ -75,7 +79,7 @@ export default function HeroSlider() {
   const addToWishlist = async (item) => {
     if (user && user.Email) {
       try {
-        await axios.post("http://localhost:3000/wishlist/add", {
+        await axios.post(`${BACKEND_URI}/wishlist/add`, {
           Email: user.Email,
           product: {
             _id: item._id,

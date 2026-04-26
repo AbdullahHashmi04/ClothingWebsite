@@ -4,6 +4,12 @@ import { useNavigate } from "react-router-dom";
 import CartContext from '../Context/CartContext.jsx'
 import axios from "axios";
 
+const BACKEND_URI = (
+    import.meta.env.VITE_BACKEND_URI ||
+    import.meta.env.VITE_BACKEND_URL ||
+    ""
+).replace(/\/+$/, "");
+
 const AuthCallback = () => {
     const navigate = useNavigate();
     const { SetRegisterStatus, setLoginStatus, setUserInfo } = useContext(CartContext)
@@ -16,7 +22,7 @@ const AuthCallback = () => {
                 return navigate("/login");
             }
             localStorage.setItem("token", token);
-            axios.get("http://localhost:3000/user/profile", {
+            axios.get(`${BACKEND_URI}/user/profile`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

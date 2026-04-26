@@ -3,6 +3,13 @@ import axios from "axios";
 import { C, Card, SectionTitle, Btn } from "./shared";
 import CartContext from "../../Context/CartContext";
 
+const BACKEND_URI = (
+  globalThis.process?.env?.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URL ||
+  ""
+).replace(/\/+$/, "");
+
 export default function UserReturns() {
   const { user } = useContext(CartContext);
   const [orders, setOrders] = useState([]);
@@ -37,10 +44,10 @@ export default function UserReturns() {
     if (!user?.Email) return;
     const token = localStorage.getItem("token");
     Promise.all([
-      axios.get(`http://localhost:3000/orders/getUserOrders/${user.Email}`, {
+      axios.get(`${BACKEND_URI}/orders/getUserOrders/${user.Email}`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
-      axios.get(`http://localhost:3000/complaints/${user.Email}`, {
+      axios.get(`${BACKEND_URI}/complaints/${user.Email}`, {
         headers: { Authorization: `Bearer ${token}` },
       }).catch(() => ({ data: [] })),
     ])
@@ -70,7 +77,7 @@ export default function UserReturns() {
       setCancelError("");
       const token = localStorage.getItem("token");
       await axios.patch(
-        `http://localhost:3000/orders/cancel/${selected._id}`,
+        `${BACKEND_URI}/orders/cancel/${selected._id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -94,7 +101,7 @@ export default function UserReturns() {
       }
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        "http://localhost:3000/complaints",
+        `${BACKEND_URI}/complaints`,
         {
           orderId: complaintOrder._id,
           email: user.Email,

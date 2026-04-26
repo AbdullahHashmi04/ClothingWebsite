@@ -23,7 +23,11 @@ import size_guide from "../../Images/size_guide.jpg"
 
 const CATEGORIES = ["All", "shirts", "pants", "accessories", "dresses"];
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
-
+const BACKEND_URI = (
+    import.meta.env.VITE_BACKEND_URI ||
+    import.meta.env.VITE_BACKEND_URL ||
+    ""
+).replace(/\/+$/, "");
 export default function ClothingCatalog() {
   const navigate = useNavigate();
   const { addToCart, mycategory, setCategory, catalogData, addVtoImage } =
@@ -102,7 +106,7 @@ export default function ClothingCatalog() {
     if (e) e.stopPropagation();
     if (user && user.Email) {
       try {
-        await axios.post("http://localhost:3000/wishlist/add", {
+        await axios.post(`${BACKEND_URI}/wishlist/add`, {
           Email: user.Email,
           product: {
             _id: item._id,

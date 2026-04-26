@@ -3,6 +3,13 @@ import CartContext from "../../Context/CartContext";
 import { C, Badge, Card, SectionTitle, Btn } from "./shared";
 import axios from "axios";
 
+const BACKEND_URI = (
+  globalThis.process?.env?.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URI ||
+  import.meta.env.VITE_BACKEND_URL ||
+  ""
+).replace(/\/+$/, "");
+
 export default function UserProfile() {
   const [editing, setEditing] = useState(false);
   const { user } = useContext(CartContext);
@@ -13,7 +20,7 @@ export default function UserProfile() {
   const onsubmit = async (form) => {
     try {
       console.log("Submitting:", user._id);
-      const res = await axios.put(`http://localhost:3000/customers/updatecustomer/${user._id}`, form, {
+      const res = await axios.put(`${BACKEND_URI}/customers/updatecustomer/${user._id}`, form, {
         headers: { "Content-Type": "application/json" }
       });
       setEditing(false);
