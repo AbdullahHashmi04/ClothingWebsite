@@ -4,11 +4,60 @@ import axios from "axios";
 import "../../Style/Admin.css";
 import CartContext from "../Context/CartContext";
 
+
+const BACKEND_URI = (
+    import.meta.env.VITE_BACKEND_URI ||
+    import.meta.env.VITE_BACKEND_URL ||
+    ""
+).replace(/\/+$/, "");
+
+const PRODUCT_CATEGORIES = [
+  "shirts",
+  "pants",
+  "Jeans",
+  "dresses",
+  "jackets",
+  "shoes",
+  "accessories",
+  "men",
+  "women",
+  "kids",
+  "other",
+];
+
+const toAbsoluteImageUrl = (url) => {
+  if (!url || typeof url !== "string") return "";
+  if (/^(https?:)?\/\//i.test(url) || url.startsWith("data:") || url.startsWith("blob:")) {
+    return url;
+  }
+
+  const normalizedPath = url.startsWith("/") ? url : `/${url}`;
+  return BACKEND_URI ? `${BACKEND_URI}${normalizedPath}` : normalizedPath;
+};
+
+const getApiErrorMessage = (error, fallbackMessage) => {
+  const payload = error?.response?.data;
+
+  if (typeof payload === "string" && payload.trim()) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.errors) && payload.errors.length > 0) {
+    return payload.errors.join(", ");
+  }
+
+  if (typeof payload?.message === "string" && payload.message.trim()) {
+    return payload.message;
+  }
+
+  return fallbackMessage;
+};
+
 const getProductImages = (product) => {
   if (Array.isArray(product?.images) && product.images.length > 0) {
-    return product.images;
+    return product.images.map(toAbsoluteImageUrl).filter(Boolean);
   }
-  return product?.imageUrl ? [product.imageUrl] : [];
+  return product?.imageUrl ? [toAbsoluteImageUrl(product.imageUrl)].filter(Boolean) : [];
 };
 
 function Modal({ onClose, editData, onSaved }) {
@@ -17,12 +66,13 @@ function Modal({ onClose, editData, onSaved }) {
     description: editData?.description || "",
     price: editData?.price || 0,
     stock: editData?.stock || 0,
-    category: editData?.category || "",
+    category: editData?.category || "shirts",
   });
 
   const [existingImages, setExistingImages] = useState(getProductImages(editData));
   const [imageFiles, setImageFiles] = useState([]);
   const [newImagePreviews, setNewImagePreviews] = useState([]);
+  const [submitError, setSubmitError] = useState("");
   const previewUrlsRef = useRef([]);
 
   useEffect(() => {
@@ -80,34 +130,38 @@ function Modal({ onClose, editData, onSaved }) {
 
   const onSubmit = async () => {
     try {
+      setSubmitError("");
       const formData = new FormData();
       appendFormFields(formData);
 
-      await axios.post("http://localhost:3000/products/addProduct", formData, {
+      await axios.post(`${BACKEND_URI}/products/addProduct`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       onSaved();
       onClose();
     } catch (err) {
-      console.error(err);
+      console.error("Failed to add product:", err);
+      setSubmitError(getApiErrorMessage(err, "Failed to add product. Please check inputs and try again."));
     }
   };
 
   const onUpdate = async () => {
     try {
+      setSubmitError("");
       const formData = new FormData();
       appendFormFields(formData);
       formData.append("retainImages", JSON.stringify(existingImages));
 
-      await axios.put(`http://localhost:3000/products/updateProduct/${editData._id}`, formData, {
+      await axios.put(`${BACKEND_URI}/products/updateProduct/${editData._id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       onSaved();
       onClose();
     } catch (err) {
-      console.error(err);
+      console.error("Failed to update product:", err);
+      setSubmitError(getApiErrorMessage(err, "Failed to update product. Please check inputs and try again."));
     }
   };
 
@@ -134,7 +188,6 @@ function Modal({ onClose, editData, onSaved }) {
               { label: "Product Name", key: "name", placeholder: "e.g. Classic Denim", type: "text" },
               { label: "Description", key: "description", placeholder: "Product details", type: "text" },
               { label: "Price (Rs)", key: "price", placeholder: "e.g. 2500", type: "number" },
-              { label: "Category", key: "category", placeholder: "e.g. shirts", type: "text" },
               { label: "Stock", key: "stock", placeholder: "e.g. 50", type: "number" },
             ].map((field) => (
               <div className="admin-field" key={field.key}>
@@ -148,6 +201,21 @@ function Modal({ onClose, editData, onSaved }) {
                 />
               </div>
             ))}
+
+            <div className="admin-field">
+              <label className="admin-field-label">Category</label>
+              <select
+                className="admin-input"
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+              >
+                {PRODUCT_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="admin-stack">
@@ -200,6 +268,8 @@ function Modal({ onClose, editData, onSaved }) {
             {editData ? "Save Changes" : "Create Product"}
           </button>
         </div>
+
+        {submitError ? <p className="admin-error-text">{submitError}</p> : null}
       </div>
     </div>
   );
@@ -213,7 +283,7 @@ export default function AdminProducts() {
 
   const refreshProducts = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/products");
+      const response = await axios.get(`${BACKEND_URI}/products`);
       setProductData(response.data.products || []);
     } catch (error) {
       console.error("Failed to refresh products:", error);
@@ -226,7 +296,7 @@ export default function AdminProducts() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3000/products/${id}`);
+      await axios.delete(`${BACKEND_URI}/products/${id}`);
       setProductData(products.filter((product) => product._id !== id));
     } catch (error) {
       console.error("Failed to delete product:", error);

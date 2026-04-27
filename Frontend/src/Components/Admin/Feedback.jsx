@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import "../../Style/Admin.css";
 import axios from "axios";
 
+const BACKEND_URI = (import.meta.env.VITE_BACKEND_URI || import.meta.env.VITE_BACKEND_URL)
+
+
 function FeedbackDetailsModal({ data, onClose }) {
     if (!data) return null;
 
@@ -52,7 +55,7 @@ export default function AdminFeedback() {
     useEffect(() => {
         const fetchFeedback = async () => {
             try {
-                let response = await axios("http://localhost:3000/Feedback");
+                let response = await axios(`${BACKEND_URI}/Feedback`);
                 setData(response.data);
             } catch (error) {
                 console.error("Error fetching feedback:", error);

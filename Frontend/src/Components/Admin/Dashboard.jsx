@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import "../../Style/Admin.css";
+const BACKEND_URI = (import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URI )
 
 const getStatusClass = (status) => {
   const key = String(status || "pending").toLowerCase();
@@ -21,8 +22,8 @@ export default function AdminDashboard() {
     const fetchAdminData = async () => {
       try {
         const [customersResponse, ordersResponse] = await Promise.all([
-          axios("http://localhost:3000/customers/getcustomers"),
-          axios("http://localhost:3000/orders/getorders"),
+          axios(`${BACKEND_URI}/customers/getcustomers`),
+          axios(`${BACKEND_URI}/orders/getorders`),
         ]);
         setCustomers(customersResponse.data || []);
         setOrders(ordersResponse.data || []);

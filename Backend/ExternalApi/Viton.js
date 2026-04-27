@@ -1,15 +1,48 @@
 import express from "express";
 import Replicate from "replicate";
+import multer from "multer"
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { CloudinaryStorage } from "multer-storage-cloudinary"
+import cloudinary from "../Config/cloudinary.js"
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 dotenv.config({ path: join(__dirname, "../.env") });
 
 const router = express.Router();
-import { upload } from '../Config/cloudinary.js'
+const hasRealEnvValue = (value) => {
+  if (typeof value !== "string") return false;
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return false;
+  return ![
+    "undefined",
+    "null",
+    "your_cloud_name",
+    "your_api_key",
+    "your_api_secret",
+    "change_me",
+  ].includes(normalized);
+};
+
+const cloudinaryConfigured = [
+  process.env.CLOUDINARY_CLOUD_NAME,
+  process.env.CLOUDINARY_API_KEY,
+  process.env.CLOUDINARY_API_SECRET,
+].every(hasRealEnvValue);
+
+const storage = cloudinaryConfigured
+  ? new CloudinaryStorage({
+      cloudinary,
+      params: {
+        folder: "products",
+        allowed_formats: ["jpg", "jpeg", "png", "webp"],
+      },
+    })
+  : multer.memoryStorage();
+
+const upload = multer({ storage });
 
 // Initialize Replicate client using env token
 const replicate = new Replicate({

@@ -1,19 +1,38 @@
 import { v2 as cloudinary } from 'cloudinary'
-import { CloudinaryStorage } from 'multer-storage-cloudinary'
-import multer from 'multer'
+import dotenv from 'dotenv'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-})
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+dotenv.config({ path: join(__dirname, '../.env') })
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'products',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp']
-  }
-})
+const hasRealEnvValue = (value) => {
+  if (typeof value !== 'string') return false
+  const normalized = value.trim().toLowerCase()
+  if (!normalized) return false
+  return ![
+    'undefined',
+    'null',
+    'your_cloud_name',
+    'your_api_key',
+    'your_api_secret',
+    'change_me',
+  ].includes(normalized)
+}
 
-export const upload = multer({ storage })
+const canUseCloudinary = [
+  process.env.CLOUDINARY_CLOUD_NAME,
+  process.env.CLOUDINARY_API_KEY,
+  process.env.CLOUDINARY_API_SECRET,
+].every(hasRealEnvValue)
+
+if (canUseCloudinary) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  })
+}
+
+export default cloudinary

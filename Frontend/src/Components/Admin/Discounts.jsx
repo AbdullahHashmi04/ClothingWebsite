@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import "../../Style/Admin.css";
+ 
+const BACKEND_URI = (import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URI )
 
 const statusColor = {
   Active: { bg: "#f0fdf4", text: "#16a34a", dot: "#22c55e" },
@@ -102,9 +104,9 @@ function Modal({ onClose, editData, categories, onSaved }) {
       }
 
       if (editData?._id) {
-        await axios.put(`http://localhost:3000/discounts/updateDiscount/${editData._id}`, payload);
+        await axios.put(`${BACKEND_URI}/discounts/updateDiscount/${editData._id}`, payload);
       } else {
-        await axios.post("http://localhost:3000/discounts/createDiscount", payload);
+        await axios.post(`${BACKEND_URI}/discounts/createDiscount`, payload);
       }
 
       await onSaved();
@@ -337,8 +339,8 @@ export default function DiscountsPage() {
     setLoading(true);
     try {
       const [discountRes, productRes] = await Promise.all([
-        axios.get("http://localhost:3000/discounts/getDiscount"),
-        axios.get("http://localhost:3000/products"),
+        axios.get(`${BACKEND_URI}/discounts/getDiscount`),
+        axios.get(`${BACKEND_URI}/products`),
       ]);
 
       const allProducts = productRes.data?.products || [];
@@ -370,7 +372,7 @@ export default function DiscountsPage() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3000/discounts/deleteDiscount/${id}`);
+      await axios.delete(`${BACKEND_URI}/discounts/deleteDiscount/${id}`);
       setDiscounts((prev) => prev.filter((item) => item._id !== id));
     } catch (err) {
       alert(err?.response?.data?.message || "Failed to delete discount");
@@ -380,7 +382,7 @@ export default function DiscountsPage() {
   const handleApplyToProducts = async (discountId) => {
     setActionLoading((prev) => ({ ...prev, [discountId]: true }));
     try {
-      const res = await axios.post(`http://localhost:3000/discounts/applyDiscountToProducts/${discountId}`);
+      const res = await axios.post(`${BACKEND_URI}/discounts/applyDiscountToProducts/${discountId}`);
       alert(res.data?.message || "Discount applied to products");
       await fetchAllData();
     } catch (err) {

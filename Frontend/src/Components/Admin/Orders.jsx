@@ -2,6 +2,12 @@ import { useState, useEffect } from "react";
 import "../../Style/Admin.css";
 import axios from "axios";
 
+const BACKEND_URI = (
+    import.meta.env.VITE_BACKEND_URI ||
+    import.meta.env.VITE_BACKEND_URL ||
+    ""
+).replace(/\/+$/, "");
+
 const getStatusClass = (status) => {
   const key = String(status || "pending").toLowerCase();
   if (["paid", "completed", "delivered"].includes(key)) return "admin-pill-paid";
@@ -110,7 +116,7 @@ export default function AdminOrders() {
     const fetchOrders = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/orders/getorders",
+          `${BACKEND_URI}/orders/getorders`,
         );
         setOrdersData(response.data);
       } catch (error) {
@@ -122,7 +128,7 @@ export default function AdminOrders() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3000/orders/deleteorder/${id}`);
+      await axios.delete(`${BACKEND_URI}/orders/deleteorder/${id}`);
       setOrdersData(ordersData.filter((o) => o._id !== id));
     } catch (error) {
       console.error("Error deleting order: ", error);

@@ -969,6 +969,13 @@
   padding: 0 1.25rem 1.2rem;
 }
 
+.admin-error-text {
+  margin: -0.5rem 1.25rem 1rem;
+  color: #b91c1c;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
 .admin-ghost-btn,
 .admin-block-btn {
   border-radius: 0.8rem;
