@@ -5,14 +5,45 @@ export default CartContext;
 
 export const CartProvider = ({ children }) => {
 
-  const [cart, setCart] = useState([]);
+  // Initialize cart from localStorage
+  const [cart, setCart] = useState(() => {
+    const savedCart = localStorage.getItem("cart");
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
+
+  // Initialize loginStatus from localStorage and token
+  const [loginStatus, setLoginStatusState] = useState(() => {
+    return localStorage.getItem("loginStatus") === "true";
+  });
+
+  // Wrapper for setLoginStatus to persist to localStorage
+  const setLoginStatus = (status) => {
+    setLoginStatusState(status);
+    localStorage.setItem("loginStatus", status.toString());
+  };
+
   const [mydata, setData] = useState([]);
   const [catalogData, setCatalog] = useState([]);
-  const [loginStatus, setLoginStatus] = useState(false);
   const [RegisterStatus, SetRegisterStatus] = useState(false);
   const [mycategory, setCategory] = useState();
   const [ImageVto, setImageVto] = useState([])
-  const [user, setUserInfo] = useState([])
+  const [user, setUserInfo] = useState(() => {
+  const token = localStorage.getItem("token")
+  if (!token) return null
+  try {
+    const decoded = JSON.parse(atob(token.split(".")[1]))
+    if (decoded.exp * 1000 < Date.now()) {
+      localStorage.removeItem("token")
+      localStorage.removeItem("loginStatus")
+      return null
+    }
+    return decoded
+  } catch {
+    localStorage.removeItem("token")
+    localStorage.removeItem("loginStatus")
+    return null
+  }
+})
   const [productData, setProductData] = useState([])
   const [items, setItems] = useState([])
 const BACKEND_URI = (
@@ -36,18 +67,27 @@ const BACKEND_URI = (
     setImageVto([product]);
   };
 
-
   const addToCart = (product) => {
-    setCart([...cart, product]);
+    const updatedCart = [...cart, product];
+    setCart(updatedCart);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
   };
 
   const removeFromCart = (id) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
+    const updatedCart = cart.filter((item) => item.id !== id);
+    setCart(updatedCart);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
   };
 
   const clearCart = () => {
     setCart([]);
+    localStorage.removeItem("cart");
   };
+
+  // Persist cart to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
 
   useEffect(() => {
     const fetchProducts = async () => {

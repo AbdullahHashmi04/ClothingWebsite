@@ -271,7 +271,7 @@ function UserDropdown({ user, onLogout }) {
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { cart, RegisterStatus, loginStatus, user, setUserInfo, setLoginStatus } = useContext(CartContext);
+  const { cart, RegisterStatus,SetRegisterStatus, loginStatus, user, setUserInfo, setLoginStatus, clearCart } = useContext(CartContext);
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth0();
@@ -321,6 +321,8 @@ export default function Navbar() {
     localStorage.removeItem("token");
     setUserInfo(null);
     setLoginStatus(false);
+    clearCart();
+    SetRegisterStatus(false)
     setIsMobileMenuOpen(false);
     navigate("/");
   };

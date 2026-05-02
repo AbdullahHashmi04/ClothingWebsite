@@ -29,7 +29,7 @@ const AuthCallback = () => {
             })
                 .then(res => {
                     console.log(res.data.user);
-                    setUserInfo(res.data.user)
+                    setUserInfo(decoded)
                     navigate("/");
                 })
                 .catch(() => {
