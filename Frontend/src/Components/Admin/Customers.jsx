@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import "../../Style/Admin.css";
 import axios from "axios";
 
+const BACKEND_URI = (import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URI )
+
+
 function Modal({ onClose, editData }) {
   if (!editData) return null;
 
@@ -84,14 +87,14 @@ export default function AdminCustomers() {
 
   useEffect(() => {
     const fetchCustomers = async () => {
-      let response = await axios("http://localhost:3000/customers/getcustomers");
+      let response = await axios(`${BACKEND_URI}/customers/getcustomers`);
       setData(response.data);
     }
     fetchCustomers();
   }, []);
 
   const handleDelete = async (id) => {
-    await axios.delete(`http://localhost:3000/customers/deletecustomer/${id}`);
+    await axios.delete(`${BACKEND_URI}/customers/deletecustomer/${id}`);
     setData(data.filter(d => d._id !== id));
   }
 

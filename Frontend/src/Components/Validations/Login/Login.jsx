@@ -14,8 +14,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const backendBaseUrl = (
     import.meta.env.VITE_BACKEND_URL ||
-    import.meta.env.BACKEND_URL ||
-    "http://localhost:3000"
+    import.meta.env.BACKEND_URL
   ).replace(/\/+$/, "");
 
   const {

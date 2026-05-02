@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import "../../Style/Admin.css";
 import axios from "axios";
 
+const BACKEND_URI = (import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URI )
+
 function ComplaintDetailsModal({ data, onClose }) {
   if (!data) return null;
 
@@ -52,7 +54,7 @@ export default function AdminComplaints() {
     useEffect(() => {
         const fetchComplaints = async () => {
             try {
-                let response = await axios.get("http://localhost:3000/Complaints");
+                let response = await axios.get(`${BACKEND_URI}/Complaints`);
                 setData(response.data);
             } catch (error) {
                 console.error("Error fetching complaints:", error);
@@ -64,7 +66,7 @@ export default function AdminComplaints() {
 
     const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3000/Complaints/${id}`);
+      await axios.delete(`${BACKEND_URI}/Complaints/${id}`);
       setData(data.filter((entry) => entry._id !== id));
     } catch (error) {
       console.error("Error deleting complaint:", error);

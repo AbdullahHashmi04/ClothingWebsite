@@ -14,7 +14,7 @@ dotenv.config({ path: join(__dirname, '../.env') });
 // ─── Google OAuth Config ───────────────────────────────────────────────────────
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
-const googleRedirectURI = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/google/callback';
+const googleRedirectURI = process.env.GOOGLE_REDIRECT_URI ;
 
 // Step 2: Handle Google's callback — exchange code for tokens
 router.get('/', async (req, res) => {

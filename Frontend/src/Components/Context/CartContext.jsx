@@ -21,13 +21,6 @@ const BACKEND_URI = (
     ""
 ).replace(/\/+$/, "");
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const response = await axios.get("http://localhost:3000/trending");
-  //     setItems(response.data);
-  //   }
-  //   fetchData();
-  // }, []);
 
   useEffect(() => {
     const fetch = async () => {
