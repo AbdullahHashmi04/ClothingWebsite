@@ -26,14 +26,14 @@ router.get('/', (req, res) => {
     // Store state and codeVerifier in HTTP-only cookies so the callback can use them
     res.cookie('google_oauth_state', state, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: true,
         maxAge: 10 * 60 * 1000, // 10 minutes
         sameSite: 'lax',
         path: '/'
     });
     res.cookie('google_code_verifier', codeVerifier, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure:   true,
         maxAge: 10 * 60 * 1000,
         sameSite: 'lax',
         path: '/'
