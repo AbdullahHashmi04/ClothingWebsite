@@ -1,7 +1,6 @@
 /* Professional Navbar Styles */
 
 .navbar {
-  position: fixed;
   top: 0;
   left: 0;
   right: 0;
@@ -110,6 +109,7 @@
 
 /* Desktop Navigation */
 .navbar-desktop-nav {
+  
   display: none;
   align-items: center;
   gap: 0.25rem;
@@ -291,19 +291,16 @@
 }
 
 .navbar-login-button {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.5rem;
   border-radius: 0.5rem;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.9375rem;
-  color: #374151;
+  color: white;
   text-decoration: none;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%);
+  box-shadow: 0 4px 14px rgba(147, 51, 234, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-block;
 }
 
 .navbar-login-button:hover {

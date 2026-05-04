@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
 import { Sparkles, TrendingUp, Heart, Zap, Award, Users, User } from "lucide-react";
 import "../../Style/About.css";
+import Image1 from "../../Images/Image1.jpeg"
+import Image2 from "../../Images/Image2.jpeg"
+import Image3 from "../../Images/Image3.jpeg"
 
 const About = () => {
   const features = [
@@ -79,7 +82,7 @@ const About = () => {
                   <div
                     key={customer.id}
                     className={`about-avatar about-avatar-gradient bg-gradient-to-br ${customer.color}`}
-                    title={customer.name}
+                    title={customer.name} 
                   >
                     <User className="about-avatar-icon" />
                   </div>
@@ -97,15 +100,20 @@ const About = () => {
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="about-image-wrapper"
-          >
-            <img
+            className="gallery"
+          > 
+             {/* <img
               src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop"
               alt="Fashion Store"
               className="about-image"
             />
-            <div className="about-image-overlay"></div>
-          </motion.div>
+            <div className="about-image-overlay"></div> */}
+
+            <img src={Image1} alt="a dream catcher"/>
+            <img src={Image2} alt="a piano"/>
+            <img src={Image3} alt="a live concert"/>
+            
+           </motion.div> 
         </div>
 
         <motion.div
@@ -141,7 +149,7 @@ const About = () => {
             ))}
           </div>
         </motion.div>
-         <section className="stats-section">
+         {/* <section className="stats-section">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -170,7 +178,7 @@ const About = () => {
             </div>
           </motion.div>
         </div>
-      </section><br /><br />
+      </section><br /><br /> */}
 
         <motion.div
           initial={{ opacity: 0, y: 40 }}
