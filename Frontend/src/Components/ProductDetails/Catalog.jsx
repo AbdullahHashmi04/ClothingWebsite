@@ -21,7 +21,10 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import size_guide from "../../Images/size_guide.jpg"
 
-const CATEGORIES = ["All", "shirts", "pants", "accessories", "dresses"];
+const CATEGORY_HIERARCHY = {
+  "Men": ["Shirts", "Pants", "Accessories"],
+  "Women": ["Dresses", "Accessories"]
+};
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 const BACKEND_URI = (
     import.meta.env.VITE_BACKEND_URI ||
@@ -34,7 +37,8 @@ export default function ClothingCatalog() {
     useContext(CartContext);
   const [showToast, setShowToast] = useState(false);
   const [query, setQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(mycategory || "All");
+  const [selectedGender, setSelectedGender] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const { user } = useContext(CartContext);
   const [showWishlistToast, setShowWishlistToast] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -92,14 +96,35 @@ export default function ClothingCatalog() {
     navigate("/vto");
   };
 
+  const normalizeCategoryValue = (value) =>
+    typeof value === "string" ? value.trim().toLowerCase() : "";
+
   const filteredProducts = catalogData.filter((p) => {
     const matchesQuery = (p.title || p.name || "")
       .toLowerCase()
       .includes(query.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "All" ||
-      p.category?.toLowerCase() === selectedCategory.toLowerCase();
-    return matchesQuery && matchesCategory;
+
+    if (!selectedGender) {
+      return matchesQuery;
+    }
+
+    const subcategories = (CATEGORY_HIERARCHY[selectedGender] || []).map((subcat) =>
+      subcat.toLowerCase()
+    );
+
+    const productCategories = Array.isArray(p.categories)
+      ? p.categories.map(normalizeCategoryValue).filter(Boolean)
+      : [normalizeCategoryValue(p.category)].filter(Boolean);
+
+    const matchesGender = productCategories.some((cat) => subcategories.includes(cat));
+
+    if (selectedCategory) {
+      const selectedCat = normalizeCategoryValue(selectedCategory);
+      const matchesCategory = productCategories.includes(selectedCat);
+      return matchesQuery && matchesGender && matchesCategory;
+    }
+
+    return matchesQuery && matchesGender;
   });
 
   const addToWishlist = async (item, e) => {
@@ -215,20 +240,89 @@ const [showSizeGuide, setShowSizeGuide] = useState(false);
               </button>
             )}
           </div>
-          <div className="cat-categories">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => {
-                  setSelectedCategory(cat);
-                  setCategory(cat === "All" ? "" : cat);
-                }}
-                className={`cat-cat-btn ${selectedCategory === cat ? "cat-cat-btn--active" : ""}`}
-                id={`cat-filter-${cat.toLowerCase()}`}
+
+          {/* Filter Checkboxes */}
+          <div className="cat-filter-dropdowns">
+            <motion.div
+              className="cat-filter-group"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <p className="cat-filter-title">Gender</p>
+              <div className="cat-filter-options">
+                {Object.keys(CATEGORY_HIERARCHY).map((gender) => {
+                  const isChecked = selectedGender === gender;
+                  return (
+                    <label key={gender} className={`cat-filter-option ${isChecked ? "is-active" : ""}`}>
+                      <input
+                        type="checkbox"
+                        className="cat-filter-checkbox"
+                        checked={isChecked}
+                        onChange={() => {
+                          const nextGender = isChecked ? null : gender;
+                          setSelectedGender(nextGender);
+                          setSelectedCategory(null);
+                          setCategory("");
+                        }}
+                      />
+                      <span>{gender}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </motion.div>
+
+            {selectedGender && (
+              <motion.div
+                className="cat-filter-group"
+                initial={{ opacity: 0, scale: 0.96, x: -10 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.96, x: -10 }}
+                transition={{ duration: 0.3 }}
               >
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </button>
-            ))}
+                <p className="cat-filter-title">{selectedGender} Categories</p>
+                <div className="cat-filter-options">
+                  {CATEGORY_HIERARCHY[selectedGender].map((cat) => {
+                    const isChecked = selectedCategory === cat;
+                    return (
+                      <label key={cat} className={`cat-filter-option ${isChecked ? "is-active" : ""}`}>
+                        <input
+                          type="checkbox"
+                          className="cat-filter-checkbox"
+                          checked={isChecked}
+                          onChange={() => {
+                            const nextCategory = isChecked ? null : cat;
+                            setSelectedCategory(nextCategory);
+                            setCategory(nextCategory || "");
+                          }}
+                        />
+                        <span>{cat}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+
+            {(selectedGender || selectedCategory || query) && (
+              <motion.button
+                className="cat-reset-btn"
+                onClick={() => {
+                  setQuery("");
+                  setSelectedGender(null);
+                  setSelectedCategory(null);
+                  setCategory("");
+                }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.2 }}
+                id="reset-filters-btn"
+              >
+                <X size={16} /> Clear
+              </motion.button>
+            )}
           </div>
         </motion.div>
 
@@ -259,7 +353,9 @@ const [showSizeGuide, setShowSizeGuide] = useState(false);
                 className="cat-empty-reset"
                 onClick={() => {
                   setQuery("");
-                  setSelectedCategory("All");
+                  setSelectedGender(null);
+                  setSelectedCategory(null);
+                  setCategory("");
                 }}
               >
                 Reset Filters
@@ -274,14 +370,13 @@ const [showSizeGuide, setShowSizeGuide] = useState(false);
               className="cat-grid"
             >
               {filteredProducts.map((item, index) => {
-                const price = item.price || 0;
-                const discount = item.discountPercentage
-                  ? Math.round(item.discountPercentage)
+                const price = Number(item.price || 0);
+                const rawOriginal = Number(item.originalPrice || 0);
+                const hasDiscount = rawOriginal > price;
+                const discount = hasDiscount
+                  ? Math.round(((rawOriginal - price) / rawOriginal) * 100)
                   : 0;
-                const originalPrice =
-                  discount > 0
-                    ? Math.round(price / (1 - discount / 100))
-                    : null;
+                const originalPrice = hasDiscount ? rawOriginal : null;
                 const rating = parseFloat(getRating(item));
                 const isWishlisted = wishlistedItems.has(item._id);
 
@@ -440,9 +535,12 @@ const [showSizeGuide, setShowSizeGuide] = useState(false);
                       alt={selectedProduct.name}
                       className="modal-img"
                     />
-                    {selectedProduct.discountPercentage > 0 && (
+                    {Number(selectedProduct.originalPrice || 0) > Number(selectedProduct.price || 0) && (
                       <div className="modal-img-badge">
-                        -{Math.round(selectedProduct.discountPercentage)}% OFF
+                        -{Math.round(
+                          ((Number(selectedProduct.originalPrice || 0) - Number(selectedProduct.price || 0)) /
+                            Number(selectedProduct.originalPrice || 1)) * 100
+                        )}% OFF
                       </div>
                     )}
                   </div>
@@ -553,24 +651,15 @@ const [showSizeGuide, setShowSizeGuide] = useState(false);
                       <span className="modal-price">
                         Rs. {(selectedProduct.price || 0).toLocaleString()}
                       </span>
-                      {selectedProduct.discountPercentage > 0 && (
+                      {Number(selectedProduct.originalPrice || 0) > Number(selectedProduct.price || 0) && (
                         <>
                           <span className="modal-price-orig">
                             Rs.{" "}
-                            {Math.round(
-                              (selectedProduct.price || 0) /
-                                (1 - selectedProduct.discountPercentage / 100),
-                            ).toLocaleString()}
+                            {Number(selectedProduct.originalPrice || 0).toLocaleString()}
                           </span>
                           <span className="modal-price-save">
                             Save Rs.{" "}
-                            {(
-                              Math.round(
-                                (selectedProduct.price || 0) /
-                                  (1 -
-                                    selectedProduct.discountPercentage / 100),
-                              ) - (selectedProduct.price || 0)
-                            ).toLocaleString()}
+                            {(Number(selectedProduct.originalPrice || 0) - Number(selectedProduct.price || 0)).toLocaleString()}
                           </span>
                         </>
                       )}

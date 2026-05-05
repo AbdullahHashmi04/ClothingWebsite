@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import CartContext from "../Context/CartContext";
 import { motion } from "framer-motion";
@@ -6,9 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   AlertCircle,
   ArrowLeft,
-  CalendarClock,
   Check,
-  CreditCard,
   Mail,
   MapPin,
   Phone,
@@ -17,6 +15,7 @@ import {
   User,
 } from "lucide-react";
 import axios from "axios";
+import Payment from "../Payment/Payment.jsx";
 import "../../Style/OrderForm.css";
 const BACKEND_URI = (
     import.meta.env.VITE_BACKEND_URI ||
@@ -26,6 +25,10 @@ const BACKEND_URI = (
 const OrderForm = () => {
   const navigate = useNavigate();
   const { cart, clearCart, user, loginStatus } = useContext(CartContext);
+  const [pendingOrder, setPendingOrder] = useState(null);
+  const [orderError, setOrderError] = useState("");
+  const [paymentStarted, setPaymentStarted] = useState(false);
+  const [orderSubmitting, setOrderSubmitting] = useState(false);
 
   const {
     register,
@@ -38,9 +41,6 @@ const OrderForm = () => {
       Email: "",
       Phone: "",
       Address: "",
-      CardNumber: "",
-      expiry: "",
-      cvv: "",
     },
   });
 
@@ -59,9 +59,6 @@ const OrderForm = () => {
       Email: user?.Email || "",
       Phone: user?.Phone || "",
       Address: user?.Address || "",
-      CardNumber: "",
-      expiry: "",
-      cvv: "",
     });
   }, [user, reset]);
 
@@ -74,24 +71,68 @@ const OrderForm = () => {
   const isCartEmpty = cart.length === 0;
 
   const onSubmit = async (data) => {
-    try {
-      const payload = {
-        ...data,
-        Total: Number(finalPrice.toFixed(2)),
-        cart: cart.map((item) => ({ name: item.name })),
-      };
+    setOrderError("");
+    const orderData = {
+      ...data,
+      Total: Number(finalPrice.toFixed(2)),
+      cart: cart.map((item) => {
+        const quantity = Number(item.quantity ?? item.qty ?? 1);
+        const price = Number(item.price || 0);
 
-      const res = await axios.post(`${BACKEND_URI}/orders/createOrder`, {
-        data: payload,
-      });
+        return {
+          name: item.name,
+          quantity,
+          price: price.toFixed(2),
+        };
+      }),
+    };
+    
+    console.log('📋 Order data prepared:', orderData);
+    
+    setPendingOrder(orderData);
+    setPaymentStarted(true);
+  };
 
-      if (res.status === 200) {
-        clearCart();
-        navigate("/feedback");
+  // Create payment success handler that uses the order data
+  const createPaymentSuccessHandler = (orderData) => {
+    return async () => {
+      if (!orderData) {
+        setOrderError("Missing order details. Please submit the form again.");
+        throw new Error("No order data");
       }
-    } catch (error) {
-      console.error("Order submission error:", error);
-    }
+
+      setOrderSubmitting(true);
+
+      try {
+        console.log('💳 Creating order after payment success:', orderData);
+        
+        const res = await axios.post(`${BACKEND_URI}/orders/createOrder`, {
+          data: orderData,
+        });
+
+        console.log('✅ Order created successfully:', res.data);
+
+        if (res.status === 200) {
+          clearCart();
+          setPaymentStarted(false); // Reset payment state
+          setPendingOrder(null);
+          navigate("/feedback");
+        } else {
+          setOrderError("Payment succeeded, but the order could not be saved. Status: " + res.status);
+          throw new Error("Order creation returned non-200 status");
+        }
+      } catch (error) {
+        console.error("❌ Order submission error:", error);
+        setOrderError(
+          error.response?.data?.message || 
+          error.message ||
+          "Payment succeeded, but order submission failed."
+        );
+        throw error; // Re-throw so CheckoutForm knows there was an error
+      } finally {
+        setOrderSubmitting(false);
+      }
+    };
   };
 
   return (
@@ -225,74 +266,26 @@ const OrderForm = () => {
             >
               <div className="of-card-head">
                 <div className="of-icon of-icon-pink">
-                  <CreditCard />
+                  <ShieldCheck />
                 </div>
                 <div>
-                  <h2>Payment Details</h2>
-                  <p>Encrypted and secured payment processing.</p>
+                  <h2>Stripe Sandbox Payment</h2>
+                  <p>Your card details will be entered inside Stripe, not in this form.</p>
                 </div>
               </div>
 
-              <div className="of-fields-grid">
-                <div className="of-field of-field-span-2">
-                  <label htmlFor="card-number">Card Number</label>
-                  <div className="of-input-wrap">
-                    <CreditCard className="of-input-icon" />
-                    <input
-                      id="card-number"
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="0000 0000 0000 0000"
-                      {...register("CardNumber", {
-                        required: "Card number is required",
-                        minLength: { value: 12, message: "Card number is too short" },
-                      })}
-                    />
-                  </div>
-                  {errors.CardNumber && <p className="of-error">{errors.CardNumber.message}</p>}
-                </div>
+              <p className="of-security-note" style={{ marginTop: 0 }}>
+                Submit the shipping and account details first. Stripe will open with your order total next.
+              </p>
 
-                <div className="of-field">
-                  <label htmlFor="expiry">Expiry Date</label>
-                  <div className="of-input-wrap">
-                    <CalendarClock className="of-input-icon" />
-                    <input
-                      id="expiry"
-                      type="text"
-                      placeholder="MM/YY"
-                      {...register("expiry", {
-                        required: "Expiry date is required",
-                        pattern: {
-                          value: /^(0[1-9]|1[0-2])\/(\d{2})$/,
-                          message: "Use MM/YY format",
-                        },
-                      })}
-                    />
-                  </div>
-                  {errors.expiry && <p className="of-error">{errors.expiry.message}</p>}
+              {paymentStarted && pendingOrder && (
+                <div className="of-stripe-panel">
+                  <Payment 
+                    amount={finalPrice} 
+                    onSuccess={createPaymentSuccessHandler(pendingOrder)} 
+                  />
                 </div>
-
-                <div className="of-field">
-                  <label htmlFor="cvv">CVV</label>
-                  <div className="of-input-wrap">
-                    <ShieldCheck className="of-input-icon" />
-                    <input
-                      id="cvv"
-                      type="password"
-                      maxLength={4}
-                      placeholder="123"
-                      {...register("cvv", {
-                        required: "CVV is required",
-                        pattern: {
-                          value: /^\d{3,4}$/,
-                          message: "CVV must be 3 or 4 digits",
-                        },
-                      })}
-                    />
-                  </div>
-                  {errors.cvv && <p className="of-error">{errors.cvv.message}</p>}
-                </div>
-              </div>
+              )}
             </motion.section>
           </div>
 
@@ -367,8 +360,8 @@ const OrderForm = () => {
 
                   <input type="hidden" {...register("Total")} value={Number(finalPrice.toFixed(2))} readOnly />
 
-                  <button type="submit" disabled={isSubmitting || isCartEmpty} className="of-primary-btn">
-                    {isSubmitting ? (
+                  <button type="submit" disabled={isSubmitting || isCartEmpty || orderSubmitting} className="of-primary-btn">
+                    {isSubmitting || orderSubmitting ? (
                       <span className="of-spinner-wrap">
                         <span className="of-spinner" />
                         Processing...
@@ -376,10 +369,12 @@ const OrderForm = () => {
                     ) : (
                       <>
                         <Check />
-                        Place Order
+                        Continue to Secure Payment
                       </>
                     )}
                   </button>
+
+                  {orderError && <p className="of-error">{orderError}</p>}
                 </>
               )}
 

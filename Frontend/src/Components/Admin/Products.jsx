@@ -25,6 +25,38 @@ const PRODUCT_CATEGORIES = [
   "other",
 ];
 
+const normalizeCategories = (raw) => {
+  if (!raw) return [];
+
+  let categories = raw;
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+      try {
+        categories = JSON.parse(trimmed);
+      } catch {
+        categories = [trimmed];
+      }
+    } else {
+      categories = [trimmed];
+    }
+  }
+
+  if (!Array.isArray(categories)) {
+    categories = [categories];
+  }
+
+  return categories
+    .map((cat) => (typeof cat === "string" ? cat.trim() : ""))
+    .filter(Boolean)
+    .map((cat) => {
+      const match = PRODUCT_CATEGORIES.find(
+        (option) => option.toLowerCase() === cat.toLowerCase()
+      );
+      return match || cat;
+    });
+};
+
 const toAbsoluteImageUrl = (url) => {
   if (!url || typeof url !== "string") return "";
   if (/^(https?:)?\/\//i.test(url) || url.startsWith("data:") || url.startsWith("blob:")) {
@@ -61,12 +93,15 @@ const getProductImages = (product) => {
 };
 
 function Modal({ onClose, editData, onSaved }) {
+  const initialCategories = normalizeCategories(
+    editData?.categories ?? editData?.category ?? editData?.Category
+  );
   const [form, setForm] = useState({
     name: editData?.name || "",
     description: editData?.description || "",
     price: editData?.price || 0,
     stock: editData?.stock || 0,
-    category: editData?.category || "shirts",
+    categories: initialCategories,
   });
 
   const [existingImages, setExistingImages] = useState(getProductImages(editData));
@@ -80,6 +115,20 @@ function Modal({ onClose, editData, onSaved }) {
       previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
     };
   }, []);
+
+  useEffect(() => {
+    if (!editData) return;
+    setForm({
+      name: editData?.name || "",
+      description: editData?.description || "",
+      price: editData?.price || 0,
+      stock: editData?.stock || 0,
+      categories: normalizeCategories(
+        editData?.categories ?? editData?.category ?? editData?.Category
+      ),
+    });
+    setExistingImages(getProductImages(editData));
+  }, [editData]);
 
   const allPreviewImages = useMemo(
     () => [
@@ -124,7 +173,7 @@ function Modal({ onClose, editData, onSaved }) {
     formData.append("description", form.description);
     formData.append("price", form.price);
     formData.append("stock", form.stock);
-    formData.append("category", form.category);
+    formData.append("categories", JSON.stringify(form.categories));
     imageFiles.forEach((file) => formData.append("images", file));
   };
 
@@ -203,18 +252,71 @@ function Modal({ onClose, editData, onSaved }) {
             ))}
 
             <div className="admin-field">
-              <label className="admin-field-label">Category</label>
-              <select
-                className="admin-input"
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-              >
-                {PRODUCT_CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
+              <label className="admin-field-label">Categories (Select Multiple)</label>
+              <div className="admin-categories-container">
+                <div className="admin-categories-grid">
+                  {PRODUCT_CATEGORIES.map((category) => {
+                    const isSelected = form.categories.includes(category);
+                    return (
+                      <label key={category} className="admin-category-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setForm({
+                                ...form,
+                                categories: [...form.categories, category],
+                              });
+                            } else {
+                              setForm({
+                                ...form,
+                                categories: form.categories.filter((c) => c !== category),
+                              });
+                            }
+                          }}
+                          style={{ display: "none" }}
+                        />
+                        <div className={`admin-category-option ${isSelected ? "admin-category-option--selected" : ""}`}>
+                          <svg className="admin-category-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                          <span>{category}</span>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {form.categories.length > 0 && (
+                <div className="admin-categories-selected">
+                  <p className="admin-categories-label">Selected ({form.categories.length})</p>
+                  <div className="admin-categories-tags">
+                    {form.categories.map((cat) => (
+                      <div key={cat} className="admin-category-tag">
+                        <span>{cat}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setForm({
+                              ...form,
+                              categories: form.categories.filter((c) => c !== cat),
+                            })
+                          }
+                          className="admin-category-tag-remove"
+                          aria-label={`Remove ${cat}`}
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

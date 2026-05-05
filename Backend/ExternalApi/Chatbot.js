@@ -6,14 +6,14 @@ const router = express.Router();
 router.post("/", async (req, res) => {
     try {
 
-        const response = await axios.post(
+    const response = await axios.post(
     "https://api.groq.com/openai/v1/chat/completions",
     {
         model: "llama-3.3-70b-versatile", // or "mixtral-8x7b-32768", "gemma2-9b-it"
         messages: [
             { role: "system", content: "You are a helpful ecommerce assistant." },
             { role: "user", content: req.body.message }
-        ]
+        ] 
     },
     {
         headers: {

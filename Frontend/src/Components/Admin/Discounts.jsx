@@ -82,6 +82,7 @@ function Modal({ onClose, editData, categories, onSaved }) {
       targetCategory: editData.targetCategory || "",
     };
   });
+  const [applyToProductsNow, setApplyToProductsNow] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -103,10 +104,20 @@ function Modal({ onClose, editData, categories, onSaved }) {
         payload.targetCategory = "";
       }
 
+      let savedDiscountId = editData?._id;
       if (editData?._id) {
-        await axios.put(`${BACKEND_URI}/discounts/updateDiscount/${editData._id}`, payload);
+        const res = await axios.put(`${BACKEND_URI}/discounts/updateDiscount/${editData._id}`, payload);
+        savedDiscountId = res?.data?.discount?._id || editData._id;
       } else {
-        await axios.post(`${BACKEND_URI}/discounts/createDiscount`, payload);
+        const res = await axios.post(`${BACKEND_URI}/discounts/createDiscount`, payload);
+        savedDiscountId = res?.data?.discount?._id || savedDiscountId;
+      }
+
+      if (applyToProductsNow) {
+        if (!savedDiscountId) {
+          throw new Error("Discount saved, but missing id to apply to products.");
+        }
+        await axios.post(`${BACKEND_URI}/discounts/applyDiscountToProducts/${savedDiscountId}`);
       }
 
       await onSaved();
@@ -282,6 +293,24 @@ function Modal({ onClose, editData, categories, onSaved }) {
               </select>
             </div>
           </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <input
+              type="checkbox"
+              checked={applyToProductsNow}
+              disabled={form.type === "Free Shipping"}
+              onChange={(e) => setApplyToProductsNow(e.target.checked)}
+              style={{ width: "16px", height: "16px", accentColor: "#9333ea" }}
+            />
+            <div>
+              <div style={{ fontSize: "13px", fontWeight: 600, color: "#1f2937" }}>
+                Apply discount as a sale now
+              </div>
+              <div style={{ fontSize: "12px", color: "#6b7280" }}>
+                Updates product prices immediately (not valid for Free Shipping).
+              </div>
+            </div>
+          </div>
         </div>
 
         <div style={{ display: "flex", gap: "10px", marginTop: "24px" }}>
@@ -334,6 +363,12 @@ export default function DiscountsPage() {
   const [filterStatus, setFilterStatus] = useState("All");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, tone = "success") => {
+    setToast({ message, tone });
+    setTimeout(() => setToast(null), 3200);
+  };
 
   const fetchAllData = async () => {
     setLoading(true);
@@ -392,6 +427,27 @@ export default function DiscountsPage() {
     }
   };
 
+  const handleResetProductDiscounts = async () => {
+    const confirmed = window.confirm("Reset all discounted product prices back to original?");
+    if (!confirmed) return;
+
+    setActionLoading((prev) => ({ ...prev, resetAll: true }));
+    try {
+      const res = await axios.post(`${BACKEND_URI}/discounts/resetProductDiscounts`);
+      showToast(res.data?.message || "All product discounts have been reset", "success");
+      await fetchAllData();
+    } catch (err) {
+      showToast(
+        err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          "Failed to reset product discounts",
+        "error"
+      );
+    } finally {
+      setActionLoading((prev) => ({ ...prev, resetAll: false }));
+    }
+  };
+
   return (
     <div className="admin-stack">
       {showModal && (
@@ -412,9 +468,19 @@ export default function DiscountsPage() {
             <div className="admin-card-title">Discounts</div>
             <div className="admin-muted">Create coupons and apply them directly to product prices.</div>
           </div>
-          <button className="admin-primary-btn" onClick={() => setShowModal(true)} type="button">
-            + Create Discount
-          </button>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <button className="admin-primary-btn" onClick={() => setShowModal(true)} type="button">
+              + Create Discount
+            </button>
+            <button
+              className="admin-secondary-btn"
+              onClick={handleResetProductDiscounts}
+              type="button"
+              disabled={!!actionLoading.resetAll}
+            >
+              {actionLoading.resetAll ? "Resetting..." : "Reset Product Discounts"}
+            </button>
+          </div>
         </div>
 
         <div style={{ display: "flex", gap: "12px", marginTop: "14px", flexWrap: "wrap" }}>
@@ -572,6 +638,28 @@ export default function DiscountsPage() {
           )}
         </div>
       </div>
+
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: "fixed",
+            left: "1.5rem",
+            bottom: "1.5rem",
+            zIndex: 1200,
+            padding: "0.85rem 1.2rem",
+            borderRadius: "14px",
+            color: "#fff",
+            fontSize: "13.5px",
+            fontWeight: 600,
+            background: "linear-gradient(135deg, #7c3aed 0%, #ec4899 100%)",
+            boxShadow: "0 10px 24px rgba(124,58,237,0.25)",
+          }}
+        >
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }

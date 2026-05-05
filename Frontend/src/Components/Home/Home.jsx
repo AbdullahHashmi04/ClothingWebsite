@@ -229,10 +229,6 @@ export default function HeroSlider() {
           <div className="featured-products-grid">
             {mydata.slice(0, 8).map((item, index) => {
               const price = item.price || Math.floor(Math.random() * 200) + 20;
-              const originalPrice = Math.floor(price * 1.3);
-              const discount = Math.round(
-                ((originalPrice - price) / originalPrice) * 100
-              );
 
               return (
                 <motion.div
@@ -299,14 +295,6 @@ export default function HeroSlider() {
                       <div className="product-card-footer">
                         <div className="product-card-price-container">
                           <span className="product-card-price">Rs.{item.price}</span>
-                          <span className="product-card-price-original">
-                            Rs.{item.originalPrice}
-                          </span>
-                          {discount > 0 && (
-                            <span className="product-card-discount">
-                              -{discount}%
-                            </span>
-                          )}
                         </div>
                         <button
                           className="catalog-product-add-button"

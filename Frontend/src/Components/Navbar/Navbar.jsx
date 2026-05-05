@@ -2,24 +2,38 @@ import { useState, useRef, useContext, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import "material-design-iconic-font/dist/css/material-design-iconic-font.min.css";
-import {
-  ShoppingBag,
-  Menu,
-  X,
-} from "lucide-react";
+import { ShoppingBag, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CartContext from "../Context/CartContext";
 import "../../Style/Navbar.css";
 
 const ProfileIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <circle cx="12" cy="8" r="4" />
     <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" />
   </svg>
 );
 
 const LogoutIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
     <polyline points="16 17 21 12 16 7" />
     <line x1="21" y1="12" x2="9" y2="12" />
@@ -65,7 +79,8 @@ function MenuItem({ icon, label, onClick, variant = "default", index = 0 }) {
   const isDanger = variant === "danger";
   return (
     <li
-      role="menuitem" tabIndex={0}
+      role="menuitem"
+      tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onClick?.()}
       onMouseEnter={() => setHovered(true)}
@@ -167,7 +182,11 @@ function UserDropdown({ user, onLogout }) {
 
       <div
         ref={containerRef}
-        style={{ position: "relative", display: "inline-block", minWidth: "168px" }}
+        style={{
+          position: "relative",
+          display: "inline-block",
+          minWidth: "168px",
+        }}
       >
         <button
           ref={triggerRef}
@@ -176,11 +195,19 @@ function UserDropdown({ user, onLogout }) {
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
           style={{
-            display: "flex", alignItems: "center", gap: "9px",
-            padding: "5px 12px 5px 5px", borderRadius: "40px",
+            display: "flex",
+            alignItems: "center",
+            gap: "9px",
+            padding: "5px 12px 5px 5px",
+            borderRadius: "40px",
             background: open ? "rgba(200,168,75,0.12)" : "transparent",
-            border: "1px solid", borderColor: open ? "rgba(200,168,75,0.45)" : "rgba(200,168,75,0.22)",
-            cursor: "pointer", transition: "all 0.18s ease", outline: "none",
+            border: "1px solid",
+            borderColor: open
+              ? "rgba(200,168,75,0.45)"
+              : "rgba(200,168,75,0.22)",
+            cursor: "pointer",
+            transition: "all 0.18s ease",
+            outline: "none",
           }}
           onMouseEnter={(e) => {
             if (!open) {
@@ -195,47 +222,117 @@ function UserDropdown({ user, onLogout }) {
             }
           }}
         >
-          <Avatar name={safeUser.Username} avatarUrl={safeUser.picture} size={32} />
+          <Avatar
+            name={safeUser.Username}
+            avatarUrl={safeUser.picture}
+            size={32}
+          />
           <div style={{ textAlign: "left", lineHeight: 1 }}>
-            <div style={{ fontSize: "13px", fontWeight: "500", fontFamily: "'DM Sans',sans-serif", color: "#1a1410", letterSpacing: "0.01em" }}>
+            <div
+              style={{
+                fontSize: "13px",
+                fontWeight: "500",
+                fontFamily: "'DM Sans',sans-serif",
+                color: "#1a1410",
+                letterSpacing: "0.01em",
+              }}
+            >
               {safeUser.Username || "Account"}
             </div>
-            <div style={{ fontSize: "11px", color: "#b8a070", fontFamily: "'DM Sans',sans-serif", marginTop: "2px" }}>
+            <div
+              style={{
+                fontSize: "11px",
+                color: "#b8a070",
+                fontFamily: "'DM Sans',sans-serif",
+                marginTop: "2px",
+              }}
+            >
               {safeUser.role || "User"}
             </div>
           </div>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a8060" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease", marginLeft: "1px" }}>
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#9a8060"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              transform: open ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.2s ease",
+              marginLeft: "1px",
+            }}
+          >
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </button>
 
         {open && (
-          <div role="menu" aria-label="User menu" style={{
-            position: "absolute", right: 0, top: "calc(100% + 8px)", width: "min(300px, 90vw)",
-            background: "#fffdf8", border: "1px solid rgba(200,168,75,0.18)", borderRadius: "14px",
-            boxShadow: "0 10px 36px rgba(26,20,10,0.13), 0 2px 8px rgba(26,20,10,0.06)",
-            zIndex: 50, overflow: "hidden",
-            animation: "dropdownIn 0.22s cubic-bezier(0.16,1,0.3,1) both",
-          }}>
-            <div style={{
-              padding: "14px 16px 13px",
-              borderBottom: "1px solid rgba(200,168,75,0.12)",
-              background: "linear-gradient(135deg, rgba(200,168,75,0.06) 0%, transparent 100%)",
-              display: "flex", alignItems: "center", gap: "11px",
-            }}>
-              <Avatar name={safeUser.Username} avatarUrl={safeUser.picture} size={40} />
+          <div
+            role="menu"
+            aria-label="User menu"
+            style={{
+              position: "absolute",
+              right: 0,
+              top: "calc(100% + 8px)",
+              width: "min(300px, 90vw)",
+              background: "#fffdf8",
+              border: "1px solid rgba(200,168,75,0.18)",
+              borderRadius: "14px",
+              boxShadow:
+                "0 10px 36px rgba(26,20,10,0.13), 0 2px 8px rgba(26,20,10,0.06)",
+              zIndex: 50,
+              overflow: "hidden",
+              animation: "dropdownIn 0.22s cubic-bezier(0.16,1,0.3,1) both",
+            }}
+          >
+            <div
+              style={{
+                padding: "14px 16px 13px",
+                borderBottom: "1px solid rgba(200,168,75,0.12)",
+                background:
+                  "linear-gradient(135deg, rgba(200,168,75,0.06) 0%, transparent 100%)",
+                display: "flex",
+                alignItems: "center",
+                gap: "11px",
+              }}
+            >
+              <Avatar
+                name={safeUser.Username}
+                avatarUrl={safeUser.picture}
+                size={40}
+              />
               <div>
-                <div style={{ fontSize: "14px", fontWeight: "600", fontFamily: "'DM Serif Display',Georgia,serif", color: "#1a1410", lineHeight: 1.3 }}>
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    fontFamily: "'DM Serif Display',Georgia,serif",
+                    color: "#1a1410",
+                    lineHeight: 1.3,
+                  }}
+                >
                   {safeUser.Username || "User"}
                 </div>
-                <div style={{ fontSize: "11.5px", color: "#9a8060", fontFamily: "'DM Sans',sans-serif", marginTop: "2px" }}>
+                <div
+                  style={{
+                    fontSize: "11.5px",
+                    color: "#9a8060",
+                    fontFamily: "'DM Sans',sans-serif",
+                    marginTop: "2px",
+                  }}
+                >
                   {safeUser.Email || ""}
                 </div>
               </div>
             </div>
 
-            <ul role="presentation" style={{ listStyle: "none", margin: 0, padding: "6px 0" }}>
+            <ul
+              role="presentation"
+              style={{ listStyle: "none", margin: 0, padding: "6px 0" }}
+            >
               <MenuItem
                 icon={<ProfileIcon />}
                 label="Profile"
@@ -247,9 +344,18 @@ function UserDropdown({ user, onLogout }) {
               />
             </ul>
 
-            <div style={{ height: "1px", background: "rgba(200,168,75,0.12)", margin: "2px 14px" }} />
+            <div
+              style={{
+                height: "1px",
+                background: "rgba(200,168,75,0.12)",
+                margin: "2px 14px",
+              }}
+            />
 
-            <ul role="presentation" style={{ listStyle: "none", margin: 0, padding: "6px 0 8px" }}>
+            <ul
+              role="presentation"
+              style={{ listStyle: "none", margin: 0, padding: "6px 0 8px" }}
+            >
               <MenuItem
                 icon={<LogoutIcon />}
                 label="Log out"
@@ -271,7 +377,16 @@ function UserDropdown({ user, onLogout }) {
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { cart, RegisterStatus,SetRegisterStatus, loginStatus, user, setUserInfo, setLoginStatus, clearCart } = useContext(CartContext);
+  const {
+    cart,
+    RegisterStatus,
+    SetRegisterStatus,
+    loginStatus,
+    user,
+    setUserInfo,
+    setLoginStatus,
+    clearCart,
+  } = useContext(CartContext);
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth0();
@@ -290,7 +405,7 @@ export default function Navbar() {
     { path: "/", label: "Home" },
     { path: "/catalog", label: "Catalog" },
     { path: "/trending", label: "Trending" },
-    { path: "/wearcast", label: "WearCast" }
+    { path: "/wearcast", label: "WearCast" },
   ];
 
   const isActive = (path) => {
@@ -322,7 +437,7 @@ export default function Navbar() {
     setUserInfo(null);
     setLoginStatus(false);
     clearCart();
-    SetRegisterStatus(false)
+    SetRegisterStatus(false);
     setIsMobileMenuOpen(false);
     navigate("/");
   };
@@ -337,9 +452,17 @@ export default function Navbar() {
       >
         <div className="navbar-container">
           <div className="navbar-content">
-            <Link to="/" className="navbar-logo" onClick={() => setIsMobileMenuOpen(false)}>
+            <Link
+              to="/"
+              className="navbar-logo"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
               <motion.div
-                whileHover={{ rotate: 360 }}
+                whileHover={{
+                  rotateY: 720,
+                  scale: 1.5,
+                  z: 200,
+                }}
                 transition={{ duration: 0.6 }}
                 className="navbar-logo-icon-wrapper"
               >
@@ -361,7 +484,11 @@ export default function Navbar() {
                     <motion.div
                       layoutId="activeTab"
                       className="navbar-link-active-indicator"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 380,
+                        damping: 30,
+                      }}
                     />
                   )}
                 </Link>
@@ -460,7 +587,10 @@ export default function Navbar() {
                     >
                       Profile
                     </Link>
-                    <button onClick={handleLogout} className="navbar-mobile-auth-button">
+                    <button
+                      onClick={handleLogout}
+                      className="navbar-mobile-auth-button"
+                    >
                       Log out
                     </button>
                   </>

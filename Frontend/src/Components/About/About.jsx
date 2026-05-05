@@ -100,19 +100,19 @@ const About = () => {
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="gallery"
+            className="about-image-wrapper"
           > 
-             {/* <img
+             <img
               src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop"
               alt="Fashion Store"
               className="about-image"
             />
-            <div className="about-image-overlay"></div> */}
+            {/* <div className="about-image-overlay"></div> */}
 
-            <img src={Image1} alt="a dream catcher"/>
+            {/* <img src={Image1} alt="a dream catcher"/>
             <img src={Image2} alt="a piano"/>
             <img src={Image3} alt="a live concert"/>
-            
+             */}
            </motion.div> 
         </div>
 

@@ -113,7 +113,34 @@ router.delete('/deleteDiscount/:id', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Discount not found' });
         }
 
-        return res.json({ success: true, message: 'Discount deleted successfully', discount });
+        const discountedProducts = await Product.find({ "discountMeta.discountId": discount._id });
+
+        if (discountedProducts.length > 0) {
+            const bulkOps = discountedProducts.map((product) => {
+                const restoredPrice = (typeof product.originalPrice === 'number' && product.originalPrice > 0)
+                    ? product.originalPrice
+                    : product.price;
+
+                return {
+                    updateOne: {
+                        filter: { _id: product._id },
+                        update: {
+                            $set: { price: restoredPrice },
+                            $unset: { originalPrice: "", discountMeta: "" },
+                        },
+                    },
+                };
+            });
+
+            await Product.bulkWrite(bulkOps);
+        }
+
+        return res.json({
+            success: true,
+            message: 'Discount deleted successfully',
+            discount,
+            updatedProducts: discountedProducts.length,
+        });
     } catch (err) {
         return res.status(500).json({ success: false, message: err.message || 'Failed to delete discount' });
     }
@@ -266,6 +293,51 @@ router.post('/applyDiscountToProducts/:id', async (req, res) => {
         });
     } catch (err) {
         return res.status(500).json({ success: false, message: err.message || 'Failed to apply discount to products' });
+    }
+});
+
+router.post('/resetProductDiscounts', async (_req, res) => {
+    try {
+        const discountedProducts = await Product.find({
+            $or: [
+                { originalPrice: { $exists: true, $ne: null } },
+                { discountMeta: { $exists: true } },
+            ],
+        });
+
+        if (!discountedProducts.length) {
+            return res.json({
+                success: true,
+                message: 'No discounted products found',
+                updatedProducts: 0,
+            });
+        }
+
+        const bulkOps = discountedProducts.map((product) => {
+            const restoredPrice = (typeof product.originalPrice === 'number' && product.originalPrice > 0)
+                ? product.originalPrice
+                : product.price;
+
+            return {
+                updateOne: {
+                    filter: { _id: product._id },
+                    update: {
+                        $set: { price: restoredPrice },
+                        $unset: { originalPrice: "", discountMeta: "" },
+                    },
+                },
+            };
+        });
+
+        const writeResult = await Product.bulkWrite(bulkOps);
+
+        return res.json({
+            success: true,
+            message: 'All product discounts have been reset',
+            updatedProducts: writeResult.modifiedCount || 0,
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message || 'Failed to reset product discounts' });
     }
 });
 

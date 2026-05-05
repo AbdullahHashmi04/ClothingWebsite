@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 
 const MyCart = new mongoose.Schema({
     name : String,
+    quantity : Number,
+    price : String
 })
 
 const Details = new mongoose.Schema({

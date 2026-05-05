@@ -230,7 +230,25 @@ router.post('/addProduct', async (req, res) => {
         await runProductImageUpload(req, res);
 
         const productData = { ...req.body };
-        productData.category = normalizeCategory(productData.category);
+        
+        // Handle categories as array
+        if (req.body.categories) {
+            try {
+                const parsedCategories = typeof req.body.categories === 'string' 
+                    ? JSON.parse(req.body.categories)
+                    : req.body.categories;
+                productData.categories = Array.isArray(parsedCategories) ? parsedCategories : [];
+            } catch {
+                productData.categories = [];
+            }
+        }
+        
+        // Keep category field for backwards compatibility (set to first category)
+        if (productData.categories && productData.categories.length > 0) {
+            productData.category = normalizeCategory(productData.categories[0]);
+        } else {
+            productData.category = normalizeCategory(productData.category);
+        }
 
         if (typeof productData.name === "string") productData.name = productData.name.trim();
         if (typeof productData.description === "string") productData.description = productData.description.trim();
@@ -285,7 +303,25 @@ router.put('/updateProduct/:id', async (req, res) => {
         await runProductImageUpload(req, res);
 
         const productData = { ...req.body };
-        productData.category = normalizeCategory(productData.category);
+        
+        // Handle categories as array
+        if (req.body.categories) {
+            try {
+                const parsedCategories = typeof req.body.categories === 'string' 
+                    ? JSON.parse(req.body.categories)
+                    : req.body.categories;
+                productData.categories = Array.isArray(parsedCategories) ? parsedCategories : [];
+            } catch {
+                productData.categories = [];
+            }
+        }
+        
+        // Keep category field for backwards compatibility (set to first category)
+        if (productData.categories && productData.categories.length > 0) {
+            productData.category = normalizeCategory(productData.categories[0]);
+        } else {
+            productData.category = normalizeCategory(productData.category);
+        }
 
         if (typeof productData.name === "string") productData.name = productData.name.trim();
         if (typeof productData.description === "string") productData.description = productData.description.trim();
@@ -320,7 +356,11 @@ router.put('/updateProduct/:id', async (req, res) => {
             productData.imageUrl = "";
         }
 
-        const product = await Product.findByIdAndUpdate(req.params.id, productData, { new: true });
+        const product = await Product.findByIdAndUpdate(
+            req.params.id,
+            productData,
+            { returnDocument: "after" }
+        );
         res.status(200).json({
             message: "Product updated successfully",
             product: normalizeProductForResponse(product, req),

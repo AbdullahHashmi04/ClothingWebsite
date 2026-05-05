@@ -25,6 +25,7 @@ import ComplaintRoute from "../Routes/Complaint.js"
 import WishlistRoute from "../Routes/WishlistRoute.js"
 import Viton from "../ExternalApi/Viton.js";
 import recommendationRoute from "../Routes/Ai/Recommendation.js"
+import Payment from "../Routes/Payment.js"
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -79,6 +80,10 @@ app.use("/viton", Viton);
 //User
 app.use('/Feedback', Feedback)
 app.use('/Complaints', ComplaintRoute)
+
+
+app.use('/payment',Payment)
+
 
 process.on('uncaughtException', (error) => {
   console.log('Uncaught Exception:', error.message)

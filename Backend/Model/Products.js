@@ -54,6 +54,10 @@ const productSchema = new mongoose.Schema({
     required: true,
     enum: ['shirts', 'pants', 'Jeans','dresses', 'jackets', 'shoes', 'accessories', 'other', 'men', 'women', 'kids']
   },
+  categories: [{
+    type: String,
+    enum: ['shirts', 'pants', 'Jeans','dresses', 'jackets', 'shoes', 'accessories', 'other', 'men', 'women', 'kids']
+  }],
   // additionalImages: [{
   //   type: String
   // }],

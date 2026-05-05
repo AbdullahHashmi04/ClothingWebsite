@@ -154,14 +154,14 @@ router.post(
         resultUrl = `data:image/png;base64,${base64Result}`;
       }
 
-      console.log("✅ Result URL obtained:", typeof resultUrl === 'string' ? resultUrl.substring(0, 80) + '...' : 'data URI');
+      console.log(" Result URL obtained:", typeof resultUrl === 'string' ? resultUrl.substring(0, 80) + '...' : 'data URI');
 
       res.json({
         success: true,
         result_url: resultUrl,
       });
     } catch (error) {
-      console.error("❌ IDM-VTON Replicate error:", error);
+      console.error(" IDM-VTON Replicate error:", error);
 
       const status = error.response?.status || error.status;
       const msg = error.message || "";

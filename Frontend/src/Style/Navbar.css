@@ -71,6 +71,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  perspective: 900px;
+}
+
+.navbar-logo-motion {
+  transform-style: preserve-3d;
 }
 
 .navbar-logo-glow {
@@ -304,8 +309,9 @@
 }
 
 .navbar-login-button:hover {
-  background: rgba(147, 51, 234, 0.1);
-  color: #9333ea;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(147, 51, 234, 0.5);
+  background: linear-gradient(135deg, #7e22ce 0%, #db2777 100%);
 }
 
 .navbar-signup-button {

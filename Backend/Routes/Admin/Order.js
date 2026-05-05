@@ -1,6 +1,6 @@
 import express from "express"
 import OrderDetails from "../../Model/OrderDetails.js"
-
+import { sendOrderConfirmationEmail } from '../../Utils/Service.js';
 const router = express.Router()
 
 
@@ -10,12 +10,13 @@ router.get('/getorders', async (req, res) => {
 })
 
 
-router.post("/createOrder", (req, res) => {
+router.post("/createOrder", async (req, res) => {
     const date = new Date().toISOString().split('T')[0];
-    // console.log(req.body.data)
+    const {Email} = req.body.data
     const Status = "paid"
-    const query = new OrderDetails({ ...req.body.data, date, Status });
-    query.save()
+    const Order = new OrderDetails({ ...req.body.data, date, Status });
+    Order.save()
+    await sendOrderConfirmationEmail(Email, Order);
     res.status(200)
     res.send("Successful")
 })

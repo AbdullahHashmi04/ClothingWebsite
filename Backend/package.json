@@ -9,8 +9,8 @@
     "dev": "nodemon Controller/Server.js"
   },
   "engines": {
-  "node": ">=20.0.0"
-},
+    "node": ">=20.0.0"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -27,7 +27,7 @@
     "cloudinary": "^1.41.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
-    "dotenv": "^17.3.1",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "form-data": "^4.0.5",
     "jsonwebtoken": "^9.0.3",
@@ -36,6 +36,8 @@
     "multer": "^2.1.0",
     "multer-storage-cloudinary": "^4.0.0",
     "node-fetch": "^3.3.2",
-    "replicate": "^1.4.0"
+    "nodemailer": "^8.0.7",
+    "replicate": "^1.4.0",
+    "stripe": "^22.1.0"
   }
 }
