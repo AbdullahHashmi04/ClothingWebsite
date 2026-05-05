@@ -1,5 +1,5 @@
-// import { webcrypto } from "crypto"
-// globalThis.crypto = webcrypto
+import { webcrypto } from "crypto"
+globalThis.crypto = webcrypto
 import express from "express"
 import cors from "cors"
 import bodyParser from "body-parser"

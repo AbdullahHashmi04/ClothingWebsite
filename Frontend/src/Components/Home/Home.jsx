@@ -227,7 +227,7 @@ export default function HeroSlider() {
           </motion.div>
 
           <div className="featured-products-grid">
-            {mydata.slice(0, 8).map((item, index) => {
+            {(mydata || []).slice(0, 8).map((item, index) => {
               const price = item.price || Math.floor(Math.random() * 200) + 20;
 
               return (
