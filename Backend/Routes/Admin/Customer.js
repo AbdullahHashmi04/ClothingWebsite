@@ -22,7 +22,6 @@ router.put('/updatecustomer/:Email', async (req, res) => {
         const { Username, Phone } = form;
         const { Email } = req.params;
         const updatedCustomer = await Credentials.findOneAndUpdate({ Email }, { Username, Phone }, { new: true });
-        console.log("Updating customer:", updatedCustomer);
         if(!updatedCustomer) {
             return res.status(404).json({ error: 'Customer not found' });
         }

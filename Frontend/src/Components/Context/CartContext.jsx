@@ -92,7 +92,6 @@ const BACKEND_URI = (
   useEffect(() => {
     const fetchProducts = async () => {
       const response = await axios.get(`${BACKEND_URI}/products`)
-      // console.log(response.data.products)
       setCatalog(response.data.products);
       setData(response.data.products)
     };

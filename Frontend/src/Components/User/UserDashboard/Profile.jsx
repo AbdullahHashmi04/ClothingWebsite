@@ -19,7 +19,6 @@ export default function UserProfile() {
 
   const onsubmit = async (form) => {
     try {
-      console.log("Submitting:", user._id);
       const res = await axios.put(`${BACKEND_URI}/customers/updatecustomer/${user._id}`, form, {
         headers: { "Content-Type": "application/json" }
       });

@@ -1,28 +1,15 @@
 import React, { useState, useContext } from "react";
 import CartContext from "../Context/CartContext.jsx";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ShoppingBag,
-  Heart,
-  Star,
-  Search,
-  Package,
-  X,
-  ChevronRight,
-  Ruler,
-  Tag,
-  Truck,
-  RotateCcw,
-  Shield,
-  Zap,
-} from "lucide-react";
+import {ShoppingBag , Heart,Star,Search,Package,
+  X,ChevronRight, Ruler,Tag,Truck,RotateCcw,Shield,Zap,} from "lucide-react";
 import "../../Style/Catalog.css";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import size_guide from "../../Images/size_guide.jpg"
 
 const CATEGORY_HIERARCHY = {
-  "Men": ["Shirts", "Pants", "Accessories"],
+  "Men": ["Shirts", "Jeans", "Accessories"],
   "Women": ["Dresses", "Accessories"]
 };
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
@@ -100,7 +87,7 @@ export default function ClothingCatalog() {
     typeof value === "string" ? value.trim().toLowerCase() : "";
 
   const filteredProducts = catalogData.filter((p) => {
-    const matchesQuery = (p.title || p.name || "")
+    const matchesQuery = (p.title || p.name || p.category || "")
       .toLowerCase()
       .includes(query.toLowerCase());
 
@@ -110,13 +97,14 @@ export default function ClothingCatalog() {
 
     const subcategories = (CATEGORY_HIERARCHY[selectedGender] || []).map((subcat) =>
       subcat.toLowerCase()
-    );
+  );
 
     const productCategories = Array.isArray(p.categories)
       ? p.categories.map(normalizeCategoryValue).filter(Boolean)
       : [normalizeCategoryValue(p.category)].filter(Boolean);
 
     const matchesGender = productCategories.some((cat) => subcategories.includes(cat));
+
 
     if (selectedCategory) {
       const selectedCat = normalizeCategoryValue(selectedCategory);

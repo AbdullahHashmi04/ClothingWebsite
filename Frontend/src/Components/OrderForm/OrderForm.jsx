@@ -87,7 +87,6 @@ const OrderForm = () => {
       }),
     };
     
-    console.log('📋 Order data prepared:', orderData);
     
     setPendingOrder(orderData);
     setPaymentStarted(true);
@@ -104,14 +103,10 @@ const OrderForm = () => {
       setOrderSubmitting(true);
 
       try {
-        console.log('💳 Creating order after payment success:', orderData);
         
         const res = await axios.post(`${BACKEND_URI}/orders/createOrder`, {
           data: orderData,
         });
-
-        console.log('✅ Order created successfully:', res.data);
-
         if (res.status === 200) {
           clearCart();
           setPaymentStarted(false); // Reset payment state

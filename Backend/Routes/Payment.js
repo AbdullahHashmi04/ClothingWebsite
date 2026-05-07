@@ -40,7 +40,6 @@ app.post('/create-payment-intent', async (req, res) => {
     // Convert to cents (Stripe expects smallest currency unit)
     const amountInCents = Math.round(amount * 100);
 
-    console.log(`📦 Creating payment intent: ${amountInCents} cents (${amount} ${currency})`);
 
     // Create payment intent with metadata for order tracking
     const paymentIntent = await stripe.paymentIntents.create({
@@ -56,7 +55,6 @@ app.post('/create-payment-intent', async (req, res) => {
       },
     });
 
-    console.log(`✅ Payment intent created: ${paymentIntent.id}`);
 
     return res.json({
       clientSecret: paymentIntent.client_secret,
@@ -101,19 +99,13 @@ app.get('/intent/:paymentIntentId', async (req, res) => {
   }
 });
 
-/**
- * Webhook handler for Stripe events
- * POST /payment/webhook
- * Signature verification required
- */
+
 app.post('/webhook', (req, res) => {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  // If no webhook secret is configured, log a warning in development
   if (!webhookSecret) {
     console.warn('⚠️  STRIPE_WEBHOOK_SECRET not configured. Webhook signature verification skipped.');
-    // For testing without webhook signature, just parse the body manually
     let event = req.body;
 
     if (typeof event === 'string') {
@@ -127,7 +119,6 @@ app.post('/webhook', (req, res) => {
     return handleWebhookEvent(event, res);
   }
 
-  // Verify webhook signature
   let event;
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
@@ -139,38 +130,22 @@ app.post('/webhook', (req, res) => {
   return handleWebhookEvent(event, res);
 });
 
-/**
- * Handle incoming webhook events
- */
 function handleWebhookEvent(event, res) {
-  console.log(`🔔 Webhook event received: ${event.type}`);
 
   switch (event.type) {
     case 'payment_intent.succeeded':
-      console.log('✅ Payment succeeded:', event.data.object.id);
-      console.log('   Amount:', event.data.object.amount / 100, event.data.object.currency);
-      console.log('   Metadata:', event.data.object.metadata);
-      // TODO: Update order status in database, send confirmation email
       break;
 
     case 'payment_intent.payment_failed':
-      console.log('❌ Payment failed:', event.data.object.id);
-      console.log('   Error:', event.data.object.last_payment_error?.message);
-      // TODO: Update order status to failed, notify user
       break;
 
     case 'payment_intent.canceled':
-      console.log('⏸️  Payment intent canceled:', event.data.object.id);
-      // TODO: Handle canceled payments
       break;
 
     case 'charge.failed':
-      console.log('❌ Charge failed:', event.data.object.id);
-      // TODO: Handle failed charges
       break;
 
     default:
-      console.log(`ℹ️  Unhandled event type: ${event.type}`);
   }
 
   res.json({ received: true });

@@ -4,7 +4,6 @@ const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
 
 export default function setUser(user) {
   try {
-    console.log("Secret:", SECRET_KEY);
     const token = jwt.sign(
       {
         _id: user._id,
@@ -13,7 +12,6 @@ export default function setUser(user) {
       SECRET_KEY,
       { expiresIn: "2h" }
     );
-    console.log("Generated token:", token);
     return token;
   } catch (err) {
     console.error("JWT generation error:", err);

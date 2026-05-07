@@ -193,7 +193,12 @@ export default function WearCast() {
       const bucket = getWeatherBucket(day.minTemp, day.maxTemp, day.code);
       const cats   = WEATHER_CATEGORY_MAP[bucket] || [];
       map[day.date] = productData
-        .filter(p => cats.some(c => p.category?.toLowerCase() === c.toLowerCase()))
+        .filter(p => {
+          const pCats = Array.isArray(p.categories) && p.categories.length > 0 
+            ? p.categories 
+            : (p.category ? [p.category] : []);
+          return cats.some(c => pCats.some(pc => pc?.trim()?.toLowerCase() === c.toLowerCase()));
+        })
         .slice(0, 6);
     });
     return map;

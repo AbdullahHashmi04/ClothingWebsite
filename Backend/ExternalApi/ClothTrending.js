@@ -265,7 +265,6 @@ router.get('/', async (req, res) => {
     let enriched;
 
     if (pexelsKey) {
-      console.log(`[ClothTrending] Fetching Pexels images for region="${region}" (${data.length} items)…`);
       enriched = await enrichWithImages(data, pexelsKey);
     } else {
       console.warn('[ClothTrending] PEXELS_API_KEY not set — returning data without images.');

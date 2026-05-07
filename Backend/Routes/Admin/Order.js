@@ -65,7 +65,6 @@ router.get('/getUserOrders/:Email', async (req, res) => {
 
     const { Email } = req.params;
     const orders = await OrderDetails.find({ Email: Email });
-    console.log(orders)
     res.json(orders);
 })
 
@@ -81,7 +80,6 @@ router.get('/getUserOrdersforChatbot/:id', async (req, res) => {
             order._id.toString().slice(-6).toLowerCase() === shortId
         );
 
-        console.log("Found", orders);
         res.json(orders);
     } catch (err) {
         console.error("Error searching order:", err);

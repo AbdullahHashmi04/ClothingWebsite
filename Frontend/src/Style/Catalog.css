@@ -268,7 +268,8 @@
   padding: 0.85rem 1rem;
   background: linear-gradient(135deg, #ede9fe 0%, #fce7f3 100%);
   border: 1px solid rgba(124,58,237,0.18);
-  border-radius: var(--cat-radius-sm);
+  /* border-radius: var(--cat-radius-sm); */
+  border-radius: 13%;
   box-shadow: 0 10px 22px rgba(124,58,237,0.12);
 }
 

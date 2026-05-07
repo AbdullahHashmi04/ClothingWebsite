@@ -111,12 +111,6 @@ router.post(
       const humanImgURI = fileToReplicateInput(personFile, "Person");
       const garmImgURI = fileToReplicateInput(clothFile, "Cloth");
 
-      console.log("🔄 Sending images to Replicate IDM-VTON...");
-      console.log(`   Person image size: ${personFile.size ?? "unknown"} bytes`);
-      console.log(`   Cloth image size:  ${clothFile.size ?? "unknown"} bytes`);
-      console.log(`   Category: ${category}`);
-
-      // Run the IDM-VTON model on Replicate
       const output = await replicate.run("cuuupid/idm-vton:0513734a452173b8173e907e3a59d19a36266e55b48528559432bd21c7d7e985", {
         input: {
           human_img: humanImgURI,
@@ -131,10 +125,6 @@ router.post(
         },
       });
 
-      console.log("✅ Replicate IDM-VTON response received");
-
-      // The output is typically a URL string to the result image
-      // It could also be a ReadableStream or other format
       let resultUrl;
 
       if (typeof output === "string") {
@@ -154,7 +144,6 @@ router.post(
         resultUrl = `data:image/png;base64,${base64Result}`;
       }
 
-      console.log(" Result URL obtained:", typeof resultUrl === 'string' ? resultUrl.substring(0, 80) + '...' : 'data URI');
 
       res.json({
         success: true,

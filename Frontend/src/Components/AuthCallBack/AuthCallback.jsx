@@ -28,12 +28,10 @@ const AuthCallback = () => {
                 },
             })
                 .then(res => {
-                    console.log(res.data.user);
                     setUserInfo(decoded)
                     navigate("/");
                 })
                 .catch(() => {
-                    console.log("Not till found")
                     navigate("/login");
                 })
             setLoginStatus(true)

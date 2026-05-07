@@ -20,7 +20,6 @@ export default function UserAddresses() {
     const fetch = async ()=>{
       const res = await axios.get(`${BACKEND_URI}/customers/getcustomers/${user._id}`, {
         headers: { "Content-Type": "application/json" }})
-        console.log( res.data);
         setUserData([res.data])
       }
       fetch();
